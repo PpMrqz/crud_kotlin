@@ -1,0 +1,9 @@
+package com.corsinf.crud_usuarios.data
+
+data class Usuario(
+    val id: Int,
+    val nombres: String,
+    val apellidos: String,
+    val email: String,
+    val ruc: String
+)
