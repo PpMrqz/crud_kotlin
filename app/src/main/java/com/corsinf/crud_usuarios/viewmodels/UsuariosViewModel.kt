@@ -28,7 +28,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             val dbHelper = DatabaseHelper(context)
             val connection = dbHelper.getConnection()
             val usuariosList = mutableListOf<Usuario>()
-
+            println("CARGANDO USUARIOS")
             try {
                 val statement = connection?.createStatement()
                 val resultSet = statement?.executeQuery(
@@ -37,8 +37,9 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                     FROM [dbo].[USUARIOS]
                     """
                 )
-
+                println("EJECUTANDO SQL")
                 while (resultSet?.next() == true) {
+                    println(resultSet)
                     usuariosList.add(
                         Usuario(
                             id = resultSet.getInt("id_usuarios"),
