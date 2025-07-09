@@ -1,3 +1,6 @@
+
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -8,6 +11,20 @@ android {
     namespace = "com.corsinf.crud_usuarios"
     compileSdk = 35
 
+
+    // Cargar el archivo local.properties
+    val localProperties = Properties().apply {
+        val localPropertiesFile = project.rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            load(localPropertiesFile.inputStream())
+        }
+    }
+    val dbIp = localProperties.getProperty("db.ip", "")
+    val dbPort = localProperties.getProperty("db.port", "1489") // Valor por defecto opcional
+    val dbUser = localProperties.getProperty("db.user", "")
+    val dbPassword = localProperties.getProperty("db.password", "")
+    val dbName = localProperties.getProperty("db.name", "")
+
     defaultConfig {
         applicationId = "com.corsinf.crud_usuarios"
         minSdk = 24
@@ -16,6 +33,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+
+
     }
 
     buildTypes {
@@ -25,6 +45,18 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "DB_IP", "\"$dbIp\"")
+            buildConfigField("String", "DB_PORT", "\"$dbPort\"")
+            buildConfigField("String", "DB_USER", "\"$dbUser\"")
+            buildConfigField("String", "DB_PASSWORD", "\"$dbPassword\"")
+            buildConfigField("String", "DB_NAME", "\"$dbName\"")
+        }
+        debug {
+            buildConfigField("String", "DB_IP", "\"$dbIp\"")
+            buildConfigField("String", "DB_PORT", "\"$dbPort\"")
+            buildConfigField("String", "DB_USER", "\"$dbUser\"")
+            buildConfigField("String", "DB_PASSWORD", "\"$dbPassword\"")
+            buildConfigField("String", "DB_NAME", "\"$dbName\"")
         }
     }
     compileOptions {
@@ -36,6 +68,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -57,7 +90,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    implementation("com.microsoft.sqlserver:mssql-jdbc:12.4.2.jre11")
+    //implementation("com.microsoft.sqlserver:mssql-jdbc:12.4.1.jre11")
+    implementation("net.sourceforge.jtds:jtds:1.3.1")
     implementation ("androidx.navigation:navigation-compose:2.7.7")
 
 
@@ -101,5 +135,9 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata")
     // Optional - Integration with RxJava
     implementation("androidx.compose.runtime:runtime-rxjava2")
+
+
+
+    // Read local.properties file
 
 }
