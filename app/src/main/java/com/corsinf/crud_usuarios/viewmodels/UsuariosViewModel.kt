@@ -61,4 +61,39 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         }
     }
 
+    fun agregarUsuario(usuario: Usuario, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val dbHelper = DatabaseHelper(context)
+            val connection = dbHelper.getConnection()
+
+            try {
+                val query = """
+                    INSERT INTO [dbo].[USUARIOS] 
+                    ([nombres], [apellidos], [email], [ci_ruc]) 
+                    VALUES (?, ?, ?, ?)
+                """.trimIndent()
+
+                val preparedStatement = connection?.prepareStatement(query)
+                preparedStatement?.setString(1, usuario.nombres)
+                preparedStatement?.setString(2, usuario.apellidos)
+                preparedStatement?.setString(3, usuario.email)
+                preparedStatement?.setString(4, usuario.ruc)
+
+                val rowsAffected = preparedStatement?.executeUpdate() ?: 0
+
+                if (rowsAffected > 0) {
+                    cargarUsuarios() // Recargar la lista
+                    onSuccess()
+                } else {
+                    onError("No se pudo insertar el usuario")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onError(e.message ?: "Error desconocido")
+            } finally {
+                dbHelper.closeConnection()
+            }
+        }
+    }
+
 }
