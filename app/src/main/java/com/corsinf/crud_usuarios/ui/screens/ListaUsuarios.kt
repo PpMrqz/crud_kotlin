@@ -73,7 +73,7 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
     }
 
     // Cargar usuarios al iniciar
-    LaunchedEffect(Unit) {
+    /*LaunchedEffect(Unit) {
         viewModel.cargarUsuarios()
-    }
+    }*/
 }

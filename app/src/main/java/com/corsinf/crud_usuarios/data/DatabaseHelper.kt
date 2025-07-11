@@ -56,8 +56,10 @@ class DatabaseHelper(private val context: Context) {
 
     fun closeConnection() {
         try {
+            println("Conexion cerrada")
             connection?.close()
         } catch (e: Exception) {
+            println("Fallo en cerrar la conexion")
             e.printStackTrace()
         }
     }
