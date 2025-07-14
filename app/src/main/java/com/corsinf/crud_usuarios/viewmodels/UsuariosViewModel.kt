@@ -74,12 +74,13 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 """.trimIndent()
 
                 val preparedStatement = connection?.prepareStatement(query)
-                preparedStatement?.setString(1, usuario.nombres)
-                preparedStatement?.setString(2, usuario.apellidos)
-                preparedStatement?.setString(3, usuario.email)
-                preparedStatement?.setString(4, usuario.ruc)
+                preparedStatement?.setString(1, sanearString(usuario.nombres))
+                preparedStatement?.setString(2, sanearString(usuario.apellidos))
+                preparedStatement?.setString(3, sanearString(usuario.email))
+                preparedStatement?.setString(4, sanearString(usuario.ruc))
 
-                val rowsAffected = preparedStatement?.executeUpdate() ?: 0
+                var rowsAffected = 1
+                rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
                     cargarUsuarios() // Recargar la lista
@@ -96,4 +97,14 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         }
     }
 
+}
+
+fun sanearString(input: String): String {
+    return input.trim()
+        .replace("'", "")
+        .replace("\"", "")
+        .replace(";", "")
+        .replace("--", "")
+        .replace("/*", "")
+        .replace("*/", "")
 }
