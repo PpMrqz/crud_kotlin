@@ -23,7 +23,7 @@ class DatabaseHelper(private val context: Context) {
             val user = BuildConfig.DB_USER
             val password = BuildConfig.DB_PASSWORD
 
-            // microsoft garca usa en su jdbc ofiicial una llamada a apis de android
+            // microsoft garca usa en su jdbc oficial una llamada a apis de android
             // escondidas/prohibidas para conectarse a su base de datos, lo cual genera
             // crasheo instantaneo.
             // Estas llamadas de api escondidas/prohibidas o "hiddenapi" estan estratificadas
@@ -56,8 +56,10 @@ class DatabaseHelper(private val context: Context) {
 
     fun closeConnection() {
         try {
+            println("Conexion cerrada")
             connection?.close()
         } catch (e: Exception) {
+            println("Fallo en cerrar la conexion")
             e.printStackTrace()
         }
     }

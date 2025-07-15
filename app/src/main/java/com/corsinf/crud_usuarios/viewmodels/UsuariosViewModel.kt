@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.sql.ResultSet
+import java.security.MessageDigest
 
 class UsuariosViewModel(private val context: Context) : ViewModel() {
     private val _usuarios = MutableStateFlow<List<Usuario>>(emptyList())
@@ -61,4 +62,62 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         }
     }
 
+    fun agregarUsuario(usuario: Usuario, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val dbHelper = DatabaseHelper(context)
+            val connection = dbHelper.getConnection()
+
+            try {
+                val query = """
+                    INSERT INTO [dbo].[USUARIOS] 
+                    ([nombres], [apellidos], [email], [ci_ruc], [password]) 
+                    VALUES (?, ?, ?, ?, ?)
+                """.trimIndent()
+
+                val contrasenaHash = hashearString(usuario.contrasena)
+
+                val preparedStatement = connection?.prepareStatement(query)
+                preparedStatement?.setString(1, sanearString(usuario.nombres))
+                preparedStatement?.setString(2, sanearString(usuario.apellidos))
+                preparedStatement?.setString(3, sanearString(usuario.email))
+                preparedStatement?.setString(4, sanearString(usuario.ruc))
+                preparedStatement?.setString(5, contrasenaHash)
+
+                var rowsAffected = 0
+                rowsAffected = preparedStatement?.executeUpdate() ?: 0
+
+                if (rowsAffected > 0) {
+                    cargarUsuarios() // Recargar la lista
+                    onSuccess()
+                } else {
+                    onError("No se pudo insertar el usuario")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onError(e.message ?: "Error desconocido")
+            } finally {
+                dbHelper.closeConnection()
+            }
+        }
+    }
+
+}
+
+fun sanearString(input: String): String {
+    return input.trim()
+        .replace("'", "")
+        .replace("\"", "")
+        .replace(";", "")
+        .replace("--", "")
+        .replace("/*", "")
+        .replace("*/", "")
+}
+
+fun hashearString(input: String): String {
+    // El hash es utilizando la libreria java.security.MessageDigest
+    // con las siguientes caracteristicas
+    val data = input.toByteArray()
+    val digestInstance = MessageDigest.getInstance("MD5")
+    val hashValue = digestInstance.digest(data)
+    return hashValue.joinToString("") { "%02x".format(it) }
 }

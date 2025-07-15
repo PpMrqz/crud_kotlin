@@ -25,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel
+import com.corsinf.crud_usuarios.ui.navigation.usuariosGraph
+import com.corsinf.crud_usuarios.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,8 +41,8 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    /*navController.navigate(Screens.AgregarUsuario.route)*/
                     println("agregar usuario")
+                    navController.navigate(Screen.AgregarUsuario.route)
                 }
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "Agregar usuario")
@@ -71,7 +73,7 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
     }
 
     // Cargar usuarios al iniciar
-    LaunchedEffect(Unit) {
+    /*LaunchedEffect(Unit) {
         viewModel.cargarUsuarios()
-    }
+    }*/
 }
