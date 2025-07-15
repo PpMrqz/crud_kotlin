@@ -15,6 +15,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,6 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,14 +41,45 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
     val apellidos = remember { mutableStateOf("") }
     val email = remember { mutableStateOf("") }
     val ruc = remember { mutableStateOf("") }
+
+    // Estado para los campos de contraseña
+    val contrasena = remember { mutableStateOf("") }
+    val confirmarContrasena = remember { mutableStateOf("") }
+    val contrasenaVisible = remember { mutableStateOf(false) }
+    val confirmPasswordVisible = remember { mutableStateOf(false) }
+
+    // Validaciones de la contraseña
+    val isPasswordValid = remember {
+        derivedStateOf {
+            contrasena.value.length >= 8 &&
+                    contrasena.value.matches(Regex(".*[A-Z].*")) && // Al menos 1 mayúscula
+                    contrasena.value.matches(Regex(".*[a-z].*")) && // Al menos 1 minúscula
+                    contrasena.value.matches(Regex(".*\\d.*")) &&   // Al menos 1 número
+                    contrasena.value.matches(Regex(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) // Al menos 1 caracter especial
+        }
+    }
+
+    val doPasswordsMatch = remember {
+        derivedStateOf {
+            contrasena.value.isNotEmpty() &&
+                    confirmarContrasena.value.isNotEmpty() &&
+                    contrasena.value == confirmarContrasena.value
+        }
+    }
+
+
+    // Son los datos del formulario valido?
     val isFormValid = remember {
         derivedStateOf {
             nombres.value.isNotEmpty() &&
                     apellidos.value.isNotEmpty() &&
                     email.value.matches(Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$")) &&
-                    (ruc.value.matches(Regex("^[0-9]{10}\$")) || ruc.value.matches(Regex("^[0-9]{13}\$")))
+                    (ruc.value.matches(Regex("^[0-9]{10}\$")) || ruc.value.matches(Regex("^[0-9]{13}\$"))) &&
+                    isPasswordValid.value &&
+                    doPasswordsMatch.value
         }
     }
+
 
     Scaffold(
         topBar = {
@@ -65,13 +100,14 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Campo de nombres
             OutlinedTextField(
                 value = nombres.value,
                 onValueChange = { nombres.value = it },
                 label = { Text("Nombres") },
                 modifier = Modifier.fillMaxWidth()
             )
-
+            // Campo de apellidos
             OutlinedTextField(
                 value = apellidos.value,
                 onValueChange = { apellidos.value = it },
@@ -79,6 +115,7 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Campo de email
             OutlinedTextField(
                 value = email.value,
                 onValueChange = {
@@ -94,6 +131,7 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                 )
             )
 
+            // Campo de CI/RUC
             OutlinedTextField(
                 value = ruc.value,
                 onValueChange = {
@@ -109,6 +147,62 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                         )
             )
 
+            // Campo de contraseña
+            OutlinedTextField(
+                value = contrasena.value,
+                onValueChange = { contrasena.value = it },
+                label = { Text("Contraseña") },
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = if (contrasenaVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    IconButton(onClick = { contrasenaVisible.value = !contrasenaVisible.value }) {
+                        Icon(
+                            imageVector = if (contrasenaVisible.value) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (contrasenaVisible.value) "Ocultar contraseña" else "Mostrar contraseña"
+                        )
+                    }
+                },
+                isError = contrasena.value.isNotEmpty() && !isPasswordValid.value
+            )
+            // Mensaje de que nomás debe tener la contraseña
+            if (contrasena.value.isNotEmpty() && !isPasswordValid.value) {
+                Text(
+                    text = "La contraseña debe tener:\n- Mínimo 8 caracteres\n- Mayúsculas y minúsculas\n- Números\n- Caracteres especiales",
+                    color = MaterialTheme.colors.error,
+                    style = MaterialTheme.typography.caption
+                )
+            }
+
+
+            // Campo de confirmar contraseña
+            OutlinedTextField(
+                value = confirmarContrasena.value,
+                onValueChange = { confirmarContrasena.value = it },
+                label = { Text("Confirmar Contraseña") },
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = if (confirmPasswordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    IconButton(onClick = { confirmPasswordVisible.value = !confirmPasswordVisible.value }) {
+                        Icon(
+                            imageVector = if (confirmPasswordVisible.value) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (confirmPasswordVisible.value) "Ocultar contraseña" else "Mostrar contraseña"
+                        )
+                    }
+                },
+                isError = confirmarContrasena.value.isNotEmpty() && !doPasswordsMatch.value
+            )
+            // Mensaje de que las contraseñas no coinciden
+            if (confirmarContrasena.value.isNotEmpty() && !doPasswordsMatch.value) {
+                Text(
+                    text = "Las contraseñas no coinciden",
+                    color = MaterialTheme.colors.error,
+                    style = MaterialTheme.typography.caption
+                )
+            }
+
+            // Botón para agregar usuario
             Button(
                 onClick = {
                     if (isFormValid.value) {
@@ -117,11 +211,17 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                             nombres = nombres.value,
                             apellidos = apellidos.value,
                             email = email.value,
-                            ruc = ruc.value
+                            ruc = ruc.value,
+                            contrasena = contrasena.value,
                         )
 
                         viewModel.agregarUsuario(
                             nuevoUsuario,
+                            // TODO resolver bug de nagegacion y mensaje de exito
+                            // Bug: java.lang.IllegalStateException: Method setCurrentState must be called on the main thread
+                            // El bug ocurre despues de ejecutar SQL debido a que esta llamada se da en un hilo distinto
+                            // del hilo principal, y android no permite modificaciones a la UI desde hilos distintos del
+                            // principal
                             onSuccess = { navController.popBackStack() },
                             onError = { /* TODO Manejar error */ }
                         )
@@ -132,6 +232,7 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                 Text("Añadir Usuario")
             }
 
+            // Mensaje de que falta llenar algo
             if (!isFormValid.value) {
                 Text(
                     text = "Complete todos los campos correctamente",
