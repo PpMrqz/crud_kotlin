@@ -6,8 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.corsinf.crud_usuarios.data.DatabaseHelper
 import com.corsinf.crud_usuarios.data.Usuario
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.sql.ResultSet
 import java.security.MessageDigest
@@ -19,6 +21,15 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    // Eventos a enviar a travez para que sean recividos por la UIs que usen collect
+    private val _uiEvent = Channel<UIEvent>()
+    val uiEvent = _uiEvent.receiveAsFlow()
+    sealed class UIEvent {
+        object UserAddedSuccess : UIEvent()
+        data class Error(val message: String) : UIEvent()
+    }
+
+    // El viewmodel cargara usuarios al iniciar para tenerlos disponibles desde el inicio
     init {
         cargarUsuarios()
     }
@@ -62,7 +73,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    fun agregarUsuario(usuario: Usuario, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun agregarUsuario(usuario: Usuario) {
         viewModelScope.launch(Dispatchers.IO) {
             val dbHelper = DatabaseHelper(context)
             val connection = dbHelper.getConnection()
@@ -88,17 +99,21 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
 
                 if (rowsAffected > 0) {
                     cargarUsuarios() // Recargar la lista
-                    onSuccess()
+                    _uiEvent.send(UIEvent.UserAddedSuccess)
                 } else {
-                    onError("No se pudo insertar el usuario")
+                    _uiEvent.send(UIEvent.Error("No se pudo insertar el usuario"))
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                onError(e.message ?: "Error desconocido")
+                _uiEvent.send(UIEvent.Error(e.message ?: "Error desconocido"))
             } finally {
                 dbHelper.closeConnection()
             }
         }
+    }
+
+    fun getUsuarioById(id: Int): Usuario? {
+        return usuarios.value.firstOrNull { it.id == id }
     }
 
 }

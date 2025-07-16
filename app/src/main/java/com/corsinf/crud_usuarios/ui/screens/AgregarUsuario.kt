@@ -22,8 +22,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +63,6 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                     contrasena.value.matches(Regex(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) // Al menos 1 caracter especial
         }
     }
-
     val doPasswordsMatch = remember {
         derivedStateOf {
             contrasena.value.isNotEmpty() &&
@@ -81,6 +85,26 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
     }
 
 
+
+    // Snackbar para mostrar mensajes breves
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Manejo de mensajes del backend
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is UIEvent.UserAddedSuccess -> navController.popBackStack()
+                is UIEvent.Error -> {
+                    snackbarHostState.showSnackbar(
+                        message = event.message,
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+        }
+    }
+
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -91,7 +115,8 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -215,15 +240,10 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                             contrasena = contrasena.value,
                         )
 
+                        // El resutado de esto sera que el backend enviara los mensajes
+                        // descritos al inicio, en LaunchedEffect
                         viewModel.agregarUsuario(
-                            nuevoUsuario,
-                            // TODO resolver bug de nagegacion y mensaje de exito
-                            // Bug: java.lang.IllegalStateException: Method setCurrentState must be called on the main thread
-                            // El bug ocurre despues de ejecutar SQL debido a que esta llamada se da en un hilo distinto
-                            // del hilo principal, y android no permite modificaciones a la UI desde hilos distintos del
-                            // principal
-                            onSuccess = { navController.popBackStack() },
-                            onError = { /* TODO Manejar error */ }
+                            nuevoUsuario
                         )
                     }
                 },
@@ -243,4 +263,5 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
             }
         }
     }
+
 }
