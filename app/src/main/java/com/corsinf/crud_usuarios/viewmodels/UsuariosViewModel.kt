@@ -22,11 +22,19 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
     val isLoading: StateFlow<Boolean> = _isLoading
 
     // Eventos a enviar a travez para que sean recividos por la UIs que usen collect
-    private val _uiEvent = Channel<UIEvent>()
-    val uiEvent = _uiEvent.receiveAsFlow()
-    sealed class UIEvent {
-        object UserAddedSuccess : UIEvent()
-        data class Error(val message: String) : UIEvent()
+    //Eventos agregar usuario
+    private val _uiEventAdd = Channel<UIEventAdd>()
+    val uiEventAdd = _uiEventAdd.receiveAsFlow()
+    sealed class UIEventAdd {
+        object UserAddedSuccess : UIEventAdd()
+        data class Error(val message: String) : UIEventAdd()
+    }
+    // Eventos borrar usuario
+    private val _uiEventDelete = Channel<UIEventDelete>()
+    val uiEventDelete = _uiEventDelete.receiveAsFlow()
+    sealed class UIEventDelete {
+        object UserDeletedSuccess : UIEventDelete()
+        data class Error(val message: String) : UIEventDelete()
     }
 
     // El viewmodel cargara usuarios al iniciar para tenerlos disponibles desde el inicio
@@ -99,17 +107,58 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
 
                 if (rowsAffected > 0) {
                     cargarUsuarios() // Recargar la lista
-                    _uiEvent.send(UIEvent.UserAddedSuccess)
+                    _uiEventAdd.send(UIEventAdd.UserAddedSuccess)
                 } else {
-                    _uiEvent.send(UIEvent.Error("No se pudo insertar el usuario"))
+                    _uiEventAdd.send(UIEventAdd.Error("No se pudo insertar el usuario"))
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                _uiEvent.send(UIEvent.Error(e.message ?: "Error desconocido"))
+                _uiEventAdd.send(UIEventAdd.Error(e.message ?: "Error desconocido"))
             } finally {
                 dbHelper.closeConnection()
             }
         }
+    }
+
+    fun eliminarUsuario(usuario: Usuario) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val dbHelper = DatabaseHelper(context)
+            val connection = dbHelper.getConnection()
+
+            try {
+                val query = """
+                    DELETE FROM [dbo].[USUARIOS] 
+                    WHERE id_usuarios = ?
+                """.trimIndent()
+
+
+                val preparedStatement = connection?.prepareStatement(query)
+                preparedStatement?.setInt(1, usuario.id)
+
+                var rowsAffected = 0
+                rowsAffected = preparedStatement?.executeUpdate() ?: 0
+
+                if (rowsAffected > 0) {
+                    cargarUsuarios() // Recargar la lista
+                    _uiEventDelete.send(UIEventDelete.UserDeletedSuccess)
+                } else {
+                    _uiEventDelete.send(UIEventDelete.Error("No se pudo eliminar el usuario"))
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiEventDelete.send(UIEventDelete.Error(e.message ?: "Error desconocido"))
+            } finally {
+                dbHelper.closeConnection()
+            }
+        }
+    }
+
+    fun editarUsuario(usuario: Usuario) {
+
+    }
+
+    fun cambiarContrasenaUsuario(usuario: Usuario) {
+
     }
 
     fun getUsuarioById(id: Int): Usuario? {

@@ -41,11 +41,8 @@ import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventAdd
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewModel) {
-    val nombres = remember { mutableStateOf("") }
-    val apellidos = remember { mutableStateOf("") }
-    val email = remember { mutableStateOf("") }
-    val ruc = remember { mutableStateOf("") }
+fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavController, viewModel: UsuariosViewModel) {
+
 
     // Estado para los campos de contraseña
     val contrasena = remember { mutableStateOf("") }
@@ -75,15 +72,10 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
     // Son los datos del formulario valido?
     val isFormValid = remember {
         derivedStateOf {
-            nombres.value.isNotEmpty() &&
-                    apellidos.value.isNotEmpty() &&
-                    email.value.matches(Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$")) &&
-                    (ruc.value.matches(Regex("^[0-9]{10}\$")) || ruc.value.matches(Regex("^[0-9]{13}\$"))) &&
-                    isPasswordValid.value &&
+            isPasswordValid.value &&
                     doPasswordsMatch.value
         }
     }
-
 
 
     // Snackbar para mostrar mensajes breves
@@ -125,52 +117,11 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Campo de nombres
-            OutlinedTextField(
-                value = nombres.value,
-                onValueChange = { nombres.value = it },
-                label = { Text("Nombres") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            // Campo de apellidos
-            OutlinedTextField(
-                value = apellidos.value,
-                onValueChange = { apellidos.value = it },
-                label = { Text("Apellidos") },
-                modifier = Modifier.fillMaxWidth()
-            )
 
-            // Campo de email
-            OutlinedTextField(
-                value = email.value,
-                onValueChange = {
-                    if (it.isEmpty() || it.matches(Regex("^[A-Za-z0-9+_.-@]+$"))) {
-                        email.value = it
-                    }
-                },
-                label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                isError = email.value.isNotEmpty() && !email.value.matches(
-                    Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$")
-                )
-            )
-
-            // Campo de CI/RUC
-            OutlinedTextField(
-                value = ruc.value,
-                onValueChange = {
-                    if (it.isEmpty() || it.matches(Regex("^\\d*\$"))) {
-                        ruc.value = it
-                    }
-                },
-                label = { Text("RUC/CI") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                isError = ruc.value.isNotEmpty() && (
-                        !ruc.value.matches(Regex("^[0-9]{10}\$")) && !ruc.value.matches(Regex("^[0-9]{13}\$"))
-                        )
-            )
+            Text(text = "Nombres: ${usuario.nombres}")
+            Text(text = "Apellidos: ${usuario.apellidos}")
+            Text(text = "Email: ${usuario.email}")
+            Text(text = "RUC/CI: ${usuario.ruc}")
 
             // Campo de contraseña
             OutlinedTextField(
@@ -209,7 +160,9 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                 visualTransformation = if (confirmPasswordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
-                    IconButton(onClick = { confirmPasswordVisible.value = !confirmPasswordVisible.value }) {
+                    IconButton(onClick = {
+                        confirmPasswordVisible.value = !confirmPasswordVisible.value
+                    }) {
                         Icon(
                             imageVector = if (confirmPasswordVisible.value) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                             contentDescription = if (confirmPasswordVisible.value) "Ocultar contraseña" else "Mostrar contraseña"
@@ -227,29 +180,29 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                 )
             }
 
-            // Botón para agregar usuario
+            // Botón para editar usuario
             Button(
                 onClick = {
                     if (isFormValid.value) {
-                        val nuevoUsuario = Usuario(
-                            id = 0, // El ID lo asignará la base de datos
-                            nombres = nombres.value,
-                            apellidos = apellidos.value,
-                            email = email.value,
-                            ruc = ruc.value,
+                        val usuarioEditado = Usuario(
+                            id = usuario.id,
+                            nombres = usuario.nombres,
+                            apellidos = usuario.apellidos,
+                            email = usuario.email,
+                            ruc = usuario.ruc,
                             contrasena = contrasena.value,
                         )
 
                         // El resutado de esto sera que el backend enviara los mensajes
                         // descritos al inicio, en LaunchedEffect
-                        viewModel.agregarUsuario(
-                            nuevoUsuario
+                        viewModel.cambiarContrasenaUsuario(
+                            usuarioEditado
                         )
                     }
                 },
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Añadir Usuario")
+                Text("Cambiar Contraseña")
             }
 
             // Mensaje de que falta llenar algo
@@ -263,5 +216,6 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
             }
         }
     }
-
 }
+
+
