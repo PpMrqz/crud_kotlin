@@ -38,6 +38,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventAdd
+import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,10 +67,10 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
 
     // Manejo de mensajes del backend
     LaunchedEffect(Unit) {
-        viewModel.uiEventAdd.collect { event ->
+        viewModel.uiEventUpdate.collect { event ->
             when (event) {
-                is UIEventAdd.UserAddedSuccess -> navController.popBackStack()
-                is UIEventAdd.Error -> {
+                is UIEventUpdate.UserUpdatedSuccess -> navController.popBackStack()
+                is UIEventUpdate.Error -> {
                     snackbarHostState.showSnackbar(
                         message = event.message,
                         duration = SnackbarDuration.Short
@@ -83,7 +84,7 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Agregar Usuario") },
+                title = { Text("Editar Usuario") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Regresar")

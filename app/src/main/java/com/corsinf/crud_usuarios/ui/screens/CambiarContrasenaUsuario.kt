@@ -38,6 +38,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventAdd
+import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdate
+import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdatePass
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,10 +85,10 @@ fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavControlle
 
     // Manejo de mensajes del backend
     LaunchedEffect(Unit) {
-        viewModel.uiEventAdd.collect { event ->
+        viewModel.uiEventUpdatePass.collect { event ->
             when (event) {
-                is UIEventAdd.UserAddedSuccess -> navController.popBackStack()
-                is UIEventAdd.Error -> {
+                is UIEventUpdatePass.UserUpdatedPassSuccess -> navController.popBackStack()
+                is UIEventUpdatePass.Error -> {
                     snackbarHostState.showSnackbar(
                         message = event.message,
                         duration = SnackbarDuration.Short
@@ -100,7 +102,7 @@ fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavControlle
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Agregar Usuario") },
+                title = { Text("Cambiar contraseña de usuario:") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Regresar")

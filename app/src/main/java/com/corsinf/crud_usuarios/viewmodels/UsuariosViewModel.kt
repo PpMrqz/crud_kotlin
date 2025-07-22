@@ -36,6 +36,20 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         object UserDeletedSuccess : UIEventDelete()
         data class Error(val message: String) : UIEventDelete()
     }
+    // Eventos actuzalizar usuario
+    private val _uiEventUpdate = Channel<UIEventUpdate>()
+    val uiEventUpdate = _uiEventUpdate.receiveAsFlow()
+    sealed class UIEventUpdate {
+        object UserUpdatedSuccess : UIEventUpdate()
+        data class Error(val message: String) : UIEventUpdate()
+    }
+    // Eventos cambiar contraseña de usuario
+    private val _uiEventUpdatePass = Channel<UIEventUpdatePass>()
+    val uiEventUpdatePass = _uiEventUpdatePass.receiveAsFlow()
+    sealed class UIEventUpdatePass {
+        object UserUpdatedPassSuccess : UIEventUpdatePass()
+        data class Error(val message: String) : UIEventUpdatePass()
+    }
 
     // El viewmodel cargara usuarios al iniciar para tenerlos disponibles desde el inicio
     init {
@@ -154,11 +168,79 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
     }
 
     fun editarUsuario(usuario: Usuario) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val dbHelper = DatabaseHelper(context)
+            val connection = dbHelper.getConnection()
 
+            try {
+                val query = """
+                UPDATE Usuarios 
+                SET nombres = ?, 
+                    apellidos = ?, 
+                    email = ?, 
+                    ruc = ? 
+                WHERE id = ?
+                """.trimIndent()
+
+                val preparedStatement = connection?.prepareStatement(query)
+                preparedStatement?.setString(1, usuario.nombres)
+                preparedStatement?.setString(2, usuario.apellidos)
+                preparedStatement?.setString(3, usuario.email)
+                preparedStatement?.setString(4, usuario.ruc)
+                preparedStatement?.setInt(5, usuario.id)
+
+                var rowsAffected = 0
+                rowsAffected = preparedStatement?.executeUpdate() ?: 0
+
+                if (rowsAffected > 0) {
+                    cargarUsuarios() // Recargar la lista
+                    _uiEventUpdate.send(UIEventUpdate.UserUpdatedSuccess)
+                } else {
+                    _uiEventUpdate.send(UIEventUpdate.Error("No se pudo actualizar información de usuario"))
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiEventUpdate.send(UIEventUpdate.Error(e.message ?: "Error desconocido"))
+            } finally {
+                dbHelper.closeConnection()
+            }
+        }
     }
 
     fun cambiarContrasenaUsuario(usuario: Usuario) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val dbHelper = DatabaseHelper(context)
+            val connection = dbHelper.getConnection()
 
+            try {
+                val query = """
+                UPDATE Usuarios 
+                SET contrasena = ? 
+                WHERE id = ?
+                """.trimIndent()
+
+                val contrasenaHash = hashearString(usuario.contrasena)
+
+                val preparedStatement = connection?.prepareStatement(query)
+                preparedStatement?.setString(1, contrasenaHash)
+                preparedStatement?.setInt(2, usuario.id)
+
+                var rowsAffected = 0
+                rowsAffected = preparedStatement?.executeUpdate() ?: 0
+
+                if (rowsAffected > 0) {
+                    cargarUsuarios() // Recargar la lista
+                    _uiEventUpdatePass.send(UIEventUpdatePass.UserUpdatedPassSuccess)
+                } else {
+                    _uiEventUpdatePass.send(UIEventUpdatePass.Error("No se pudo actualizar información de usuario"))
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiEventUpdatePass.send(UIEventUpdatePass.Error(e.message ?: "Error desconocido"))
+            } finally {
+                dbHelper.closeConnection()
+            }
+        }
     }
 
     fun getUsuarioById(id: Int): Usuario? {
