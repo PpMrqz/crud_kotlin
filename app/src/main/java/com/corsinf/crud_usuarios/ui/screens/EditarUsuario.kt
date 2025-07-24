@@ -38,38 +38,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventAdd
+import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewModel) {
-    val nombres = remember { mutableStateOf("") }
-    val apellidos = remember { mutableStateOf("") }
-    val email = remember { mutableStateOf("") }
-    val ruc = remember { mutableStateOf("") }
+fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewModel: UsuariosViewModel) {
+    val nombres = remember { mutableStateOf(usuario.nombres) }
+    val apellidos = remember { mutableStateOf(usuario.apellidos) }
+    val email = remember { mutableStateOf(usuario.email) }
+    val ruc = remember { mutableStateOf(usuario.ruc) }
 
-    // Estado para los campos de contraseña
-    val contrasena = remember { mutableStateOf("") }
-    val confirmarContrasena = remember { mutableStateOf("") }
-    val contrasenaVisible = remember { mutableStateOf(false) }
-    val confirmPasswordVisible = remember { mutableStateOf(false) }
-
-    // Validaciones de la contraseña
-    val isPasswordValid = remember {
-        derivedStateOf {
-            contrasena.value.length >= 8 &&
-                    contrasena.value.matches(Regex(".*[A-Z].*")) && // Al menos 1 mayúscula
-                    contrasena.value.matches(Regex(".*[a-z].*")) && // Al menos 1 minúscula
-                    contrasena.value.matches(Regex(".*\\d.*")) &&   // Al menos 1 número
-                    contrasena.value.matches(Regex(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) // Al menos 1 caracter especial
-        }
-    }
-    val doPasswordsMatch = remember {
-        derivedStateOf {
-            contrasena.value.isNotEmpty() &&
-                    confirmarContrasena.value.isNotEmpty() &&
-                    contrasena.value == confirmarContrasena.value
-        }
-    }
 
 
     // Son los datos del formulario valido?
@@ -78,12 +56,10 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
             nombres.value.isNotEmpty() &&
                     apellidos.value.isNotEmpty() &&
                     email.value.matches(Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$")) &&
-                    (ruc.value.matches(Regex("^[0-9]{10}\$")) || ruc.value.matches(Regex("^[0-9]{13}\$"))) &&
-                    isPasswordValid.value &&
-                    doPasswordsMatch.value
+                    (ruc.value.matches(Regex("^[0-9]{10}\$")) || ruc.value.matches(Regex("^[0-9]{13}\$")))
+
         }
     }
-
 
 
     // Snackbar para mostrar mensajes breves
@@ -91,10 +67,10 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
 
     // Manejo de mensajes del backend
     LaunchedEffect(Unit) {
-        viewModel.uiEventAdd.collect { event ->
+        viewModel.uiEventUpdate.collect { event ->
             when (event) {
-                is UIEventAdd.UserAddedSuccess -> navController.popBackStack()
-                is UIEventAdd.Error -> {
+                is UIEventUpdate.UserUpdatedSuccess -> navController.popBackStack()
+                is UIEventUpdate.Error -> {
                     snackbarHostState.showSnackbar(
                         message = event.message,
                         duration = SnackbarDuration.Short
@@ -108,7 +84,7 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Agregar Usuario") },
+                title = { Text("Editar Usuario") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Regresar")
@@ -172,84 +148,28 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                         )
             )
 
-            // Campo de contraseña
-            OutlinedTextField(
-                value = contrasena.value,
-                onValueChange = { contrasena.value = it },
-                label = { Text("Contraseña") },
-                modifier = Modifier.fillMaxWidth(),
-                visualTransformation = if (contrasenaVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    IconButton(onClick = { contrasenaVisible.value = !contrasenaVisible.value }) {
-                        Icon(
-                            imageVector = if (contrasenaVisible.value) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                            contentDescription = if (contrasenaVisible.value) "Ocultar contraseña" else "Mostrar contraseña"
-                        )
-                    }
-                },
-                isError = contrasena.value.isNotEmpty() && !isPasswordValid.value
-            )
-            // Mensaje de que nomás debe tener la contraseña
-            if (contrasena.value.isNotEmpty() && !isPasswordValid.value) {
-                Text(
-                    text = "La contraseña debe tener:\n- Mínimo 8 caracteres\n- Mayúsculas y minúsculas\n- Números\n- Caracteres especiales",
-                    color = MaterialTheme.colors.error,
-                    style = MaterialTheme.typography.caption
-                )
-            }
-
-
-            // Campo de confirmar contraseña
-            OutlinedTextField(
-                value = confirmarContrasena.value,
-                onValueChange = { confirmarContrasena.value = it },
-                label = { Text("Confirmar Contraseña") },
-                modifier = Modifier.fillMaxWidth(),
-                visualTransformation = if (confirmPasswordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    IconButton(onClick = { confirmPasswordVisible.value = !confirmPasswordVisible.value }) {
-                        Icon(
-                            imageVector = if (confirmPasswordVisible.value) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                            contentDescription = if (confirmPasswordVisible.value) "Ocultar contraseña" else "Mostrar contraseña"
-                        )
-                    }
-                },
-                isError = confirmarContrasena.value.isNotEmpty() && !doPasswordsMatch.value
-            )
-            // Mensaje de que las contraseñas no coinciden
-            if (confirmarContrasena.value.isNotEmpty() && !doPasswordsMatch.value) {
-                Text(
-                    text = "Las contraseñas no coinciden",
-                    color = MaterialTheme.colors.error,
-                    style = MaterialTheme.typography.caption
-                )
-            }
-
-            // Botón para agregar usuario
+            // Botón para editar usuario
             Button(
                 onClick = {
                     if (isFormValid.value) {
-                        val nuevoUsuario = Usuario(
-                            id = 0, // El ID lo asignará la base de datos
+                        val usuarioEditado = Usuario(
+                            id = usuario.id,
                             nombres = nombres.value,
                             apellidos = apellidos.value,
                             email = email.value,
                             ruc = ruc.value,
-                            contrasena = contrasena.value,
                         )
 
                         // El resutado de esto sera que el backend enviara los mensajes
                         // descritos al inicio, en LaunchedEffect
-                        viewModel.agregarUsuario(
-                            nuevoUsuario
+                        viewModel.editarUsuario(
+                            usuarioEditado
                         )
                     }
                 },
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Añadir Usuario")
+                Text("Editar Usuario")
             }
 
             // Mensaje de que falta llenar algo
@@ -263,5 +183,6 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
             }
         }
     }
-
 }
+
+

@@ -63,7 +63,7 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                             supportingContent = { Text(usuario.email) },
                             modifier = Modifier.clickable {
                                 println(usuario)
-                                //navController.navigate( Screen.DetalleUsuario.createRoute(usuario.id))
+                                navController.navigate( Screen.DetalleUsuario.createRoute(usuario.id))
                             }
                         )
                     }
