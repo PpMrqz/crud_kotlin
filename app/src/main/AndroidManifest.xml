@@ -12,6 +12,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Crud_usuarios"
+        android:enableOnBackInvokedCallback="true"
         tools:targetApi="31">
         <meta-data
             android:name="android:max_unrestricted_network_state_uid"
