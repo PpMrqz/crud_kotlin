@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.corsinf.crud_usuarios.data.AppRegex
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventAdd
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdate
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdatePass
@@ -56,10 +57,9 @@ fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavControlle
     val isPasswordValid = remember {
         derivedStateOf {
             contrasena.value.length >= 8 &&
-                    contrasena.value.matches(Regex(".*[A-Z].*")) && // Al menos 1 mayúscula
-                    contrasena.value.matches(Regex(".*[a-z].*")) && // Al menos 1 minúscula
-                    contrasena.value.matches(Regex(".*\\d.*")) &&   // Al menos 1 número
-                    contrasena.value.matches(Regex(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) // Al menos 1 caracter especial
+                    AppRegex.tieneLetrasMayus.containsMatchIn(contrasena.value) &&
+                    AppRegex.tieneLetrasMinus.containsMatchIn(contrasena.value) &&
+                    AppRegex.tieneNumeros.containsMatchIn(contrasena.value)
         }
     }
     val doPasswordsMatch = remember {
@@ -87,7 +87,13 @@ fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavControlle
     LaunchedEffect(Unit) {
         viewModel.uiEventUpdatePass.collect { event ->
             when (event) {
-                is UIEventUpdatePass.UserUpdatedPassSuccess -> navController.popBackStack()
+                is UIEventUpdatePass.UserUpdatedPassSuccess -> {
+                    navController.popBackStack()
+                    snackbarHostState.showSnackbar(
+                        message = "Contrasena de usuario cambiada",
+                        duration = SnackbarDuration.Short
+                    )
+                }
                 is UIEventUpdatePass.Error -> {
                     snackbarHostState.showSnackbar(
                         message = event.message,
@@ -146,7 +152,7 @@ fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavControlle
             // Mensaje de que nomás debe tener la contraseña
             if (contrasena.value.isNotEmpty() && !isPasswordValid.value) {
                 Text(
-                    text = "La contraseña debe tener:\n- Mínimo 8 caracteres\n- Mayúsculas y minúsculas\n- Números\n- Caracteres especiales",
+                    text = "La contraseña debe tener:\n- Mínimo 8 caracteres\n- Mayúsculas y minúsculas\n- Números",
                     color = MaterialTheme.colors.error,
                     style = MaterialTheme.typography.caption
                 )

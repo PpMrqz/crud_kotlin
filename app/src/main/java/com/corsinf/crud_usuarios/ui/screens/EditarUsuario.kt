@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.corsinf.crud_usuarios.data.AppRegex
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventAdd
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdate
 
@@ -55,8 +56,8 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
         derivedStateOf {
             nombres.value.isNotEmpty() &&
                     apellidos.value.isNotEmpty() &&
-                    email.value.matches(Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$")) &&
-                    (ruc.value.matches(Regex("^[0-9]{10}\$")) || ruc.value.matches(Regex("^[0-9]{13}\$")))
+                    email.value.matches(Regex(AppRegex.EMAIL)) &&
+                    (ruc.value.matches(Regex(AppRegex.CI)) || ruc.value.matches(Regex(AppRegex.RUC)))
 
         }
     }
@@ -69,7 +70,13 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
     LaunchedEffect(Unit) {
         viewModel.uiEventUpdate.collect { event ->
             when (event) {
-                is UIEventUpdate.UserUpdatedSuccess -> navController.popBackStack()
+                is UIEventUpdate.UserUpdatedSuccess -> {
+                    navController.popBackStack()
+                    snackbarHostState.showSnackbar(
+                        message = "Usuario editado",
+                        duration = SnackbarDuration.Short
+                    )
+                }
                 is UIEventUpdate.Error -> {
                     snackbarHostState.showSnackbar(
                         message = event.message,
@@ -120,7 +127,7 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
             OutlinedTextField(
                 value = email.value,
                 onValueChange = {
-                    if (it.isEmpty() || it.matches(Regex("^[A-Za-z0-9+_.-@]+$"))) {
+                    if (it.isEmpty() || it.matches(Regex(AppRegex.EMAIL_CHARS))) {
                         email.value = it
                     }
                 },
@@ -128,7 +135,7 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 isError = email.value.isNotEmpty() && !email.value.matches(
-                    Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$")
+                    Regex(AppRegex.EMAIL)
                 )
             )
 
@@ -136,7 +143,7 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
             OutlinedTextField(
                 value = ruc.value,
                 onValueChange = {
-                    if (it.isEmpty() || it.matches(Regex("^\\d*\$"))) {
+                    if (it.isEmpty() || it.matches(Regex(AppRegex.NUM_CHARS))) {
                         ruc.value = it
                     }
                 },
@@ -144,7 +151,7 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = ruc.value.isNotEmpty() && (
-                        !ruc.value.matches(Regex("^[0-9]{10}\$")) && !ruc.value.matches(Regex("^[0-9]{13}\$"))
+                        !ruc.value.matches(Regex(AppRegex.CI)) && !ruc.value.matches(Regex(AppRegex.RUC))
                         )
             )
 

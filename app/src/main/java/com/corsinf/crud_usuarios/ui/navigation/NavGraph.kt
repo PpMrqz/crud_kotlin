@@ -50,7 +50,7 @@ fun NavGraphBuilder.usuariosGraph(navController: NavController, viewModel: Usuar
                 if (usuario != null) {
                     DetalleUsuarioScreen(usuario, navController, viewModel)
                 } else {
-                    // TODO Manejar error
+                    println("Usuario es null, no se puede navegar a ventana de detalles")
                 }
             }
 
@@ -65,7 +65,7 @@ fun NavGraphBuilder.usuariosGraph(navController: NavController, viewModel: Usuar
                 if (usuario != null) {
                     EditarUsuarioScreen(usuario, navController, viewModel)
                 } else {
-                    // TODO Manejar error
+                    println("Usuario es null, no se puede navegar a ventana de editar usuario")
                 }
             }
         }
@@ -79,7 +79,7 @@ fun NavGraphBuilder.usuariosGraph(navController: NavController, viewModel: Usuar
                 if (usuario != null) {
                     CambiarContrasenaUsuarioScreen(usuario, navController, viewModel)
                 } else {
-                    // TODO Manejar error
+                    println("Usuario es null, no se puede navegar a ventana de cambiar contraseña de usuario")
                 }
             }
         }

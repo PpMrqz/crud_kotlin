@@ -46,7 +46,13 @@ fun DetalleUsuarioScreen(usuario: Usuario, navController: NavController, viewMod
     LaunchedEffect(Unit) {
         viewModel.uiEventDelete.collect { event ->
             when (event) {
-                is UIEventDelete.UserDeletedSuccess -> navController.popBackStack()
+                is UIEventDelete.UserDeletedSuccess -> {
+                    navController.popBackStack()
+                    snackbarHostState.showSnackbar(
+                        message = "Usuario eliminado",
+                        duration = SnackbarDuration.Short
+                    )
+                }
                 is UIEventDelete.Error -> {
                     snackbarHostState.showSnackbar(
                         message = event.message,

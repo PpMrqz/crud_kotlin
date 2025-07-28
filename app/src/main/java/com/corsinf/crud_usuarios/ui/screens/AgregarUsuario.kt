@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.corsinf.crud_usuarios.data.AppRegex
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventAdd
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,10 +58,9 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
     val isPasswordValid = remember {
         derivedStateOf {
             contrasena.value.length >= 8 &&
-                    contrasena.value.matches(Regex(".*[A-Z].*")) && // Al menos 1 mayúscula
-                    contrasena.value.matches(Regex(".*[a-z].*")) && // Al menos 1 minúscula
-                    contrasena.value.matches(Regex(".*\\d.*")) &&   // Al menos 1 número
-                    contrasena.value.matches(Regex(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) // Al menos 1 caracter especial
+                    AppRegex.tieneLetrasMayus.containsMatchIn(contrasena.value) &&
+                    AppRegex.tieneLetrasMinus.containsMatchIn(contrasena.value) &&
+                    AppRegex.tieneNumeros.containsMatchIn(contrasena.value)
         }
     }
     val doPasswordsMatch = remember {
@@ -77,8 +77,8 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
         derivedStateOf {
             nombres.value.isNotEmpty() &&
                     apellidos.value.isNotEmpty() &&
-                    email.value.matches(Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$")) &&
-                    (ruc.value.matches(Regex("^[0-9]{10}\$")) || ruc.value.matches(Regex("^[0-9]{13}\$"))) &&
+                    email.value.matches(Regex(AppRegex.EMAIL)) &&
+                    (ruc.value.matches(Regex(AppRegex.CI)) || ruc.value.matches(Regex(AppRegex.RUC))) &&
                     isPasswordValid.value &&
                     doPasswordsMatch.value
         }
@@ -93,7 +93,13 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
     LaunchedEffect(Unit) {
         viewModel.uiEventAdd.collect { event ->
             when (event) {
-                is UIEventAdd.UserAddedSuccess -> navController.popBackStack()
+                is UIEventAdd.UserAddedSuccess -> {
+                    navController.popBackStack()
+                    snackbarHostState.showSnackbar(
+                        message = "Usuario agregado",
+                        duration = SnackbarDuration.Short
+                    )
+                }
                 is UIEventAdd.Error -> {
                     snackbarHostState.showSnackbar(
                         message = event.message,
@@ -144,7 +150,7 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
             OutlinedTextField(
                 value = email.value,
                 onValueChange = {
-                    if (it.isEmpty() || it.matches(Regex("^[A-Za-z0-9+_.-@]+$"))) {
+                    if (it.isEmpty() || it.matches(Regex(AppRegex.EMAIL_CHARS))) {
                         email.value = it
                     }
                 },
@@ -152,7 +158,7 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 isError = email.value.isNotEmpty() && !email.value.matches(
-                    Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$")
+                    Regex(AppRegex.EMAIL)
                 )
             )
 
@@ -160,7 +166,7 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
             OutlinedTextField(
                 value = ruc.value,
                 onValueChange = {
-                    if (it.isEmpty() || it.matches(Regex("^\\d*\$"))) {
+                    if (it.isEmpty() || it.matches(Regex(AppRegex.NUM_CHARS))) {
                         ruc.value = it
                     }
                 },
@@ -168,7 +174,7 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = ruc.value.isNotEmpty() && (
-                        !ruc.value.matches(Regex("^[0-9]{10}\$")) && !ruc.value.matches(Regex("^[0-9]{13}\$"))
+                        !ruc.value.matches(Regex(AppRegex.CI)) && !ruc.value.matches(Regex(AppRegex.RUC))
                         )
             )
 
@@ -193,7 +199,7 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
             // Mensaje de que nomás debe tener la contraseña
             if (contrasena.value.isNotEmpty() && !isPasswordValid.value) {
                 Text(
-                    text = "La contraseña debe tener:\n- Mínimo 8 caracteres\n- Mayúsculas y minúsculas\n- Números\n- Caracteres especiales",
+                    text = "La contraseña debe tener:\n- Mínimo 8 caracteres\n- Mayúsculas y minúsculas\n- Números",
                     color = MaterialTheme.colors.error,
                     style = MaterialTheme.typography.caption
                 )

@@ -50,6 +50,12 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         object UserUpdatedPassSuccess : UIEventUpdatePass()
         data class Error(val message: String) : UIEventUpdatePass()
     }
+    // Eventos de navegación por interfaz de usuario
+    /*val channelEventNav = Channel<UIEventNav>()
+    val uiEventNav = channelEventNav.receiveAsFlow()
+    sealed class UIEventNav {
+        data class Error(val message: String) : UIEventNav()
+    }*/
 
     // El viewmodel cargara usuarios al iniciar para tenerlos disponibles desde el inicio
     init {
