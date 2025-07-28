@@ -66,7 +66,7 @@ fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavControlle
         derivedStateOf {
             contrasena.value.isNotEmpty() &&
                     confirmarContrasena.value.isNotEmpty() &&
-                    contrasena.value == confirmarContrasena.value
+                    contrasena.value.trim() == confirmarContrasena.value.trim()
         }
     }
 
