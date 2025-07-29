@@ -22,6 +22,8 @@ class DatabaseHelper(private val context: Context) {
             val dbName = BuildConfig.DB_NAME
             val user = BuildConfig.DB_USER
             val password = BuildConfig.DB_PASSWORD
+            val loginTimeout = 5 // Timeout para establecer conexión
+            val socketTimeout = 10 // Timeout para operaciones después de conectado
 
             // microsoft garca usa en su jdbc oficial una llamada a apis de android
             // escondidas/prohibidas para conectarse a su base de datos, lo cual genera
@@ -45,7 +47,8 @@ class DatabaseHelper(private val context: Context) {
             //val url = "jdbc:sqlserver://$ip:$port;databaseName=$dbName;encrypt=true;trustServerCertificate=true"
             //connection = DriverManager.getConnection(url, user, password)
             Class.forName("net.sourceforge.jtds.jdbc.Driver")
-            val url = "jdbc:jtds:sqlserver://$ip:$port;databaseName=$dbName;user=$user;password=$password;"
+            var url = "jdbc:jtds:sqlserver://$ip:$port;databaseName=$dbName;user=$user;password=$password;"
+            url += "loginTimeout=$loginTimeout; socketTimeout=$socketTimeout"
             connection = DriverManager.getConnection(url)
             connection
         } catch (e: Exception) {

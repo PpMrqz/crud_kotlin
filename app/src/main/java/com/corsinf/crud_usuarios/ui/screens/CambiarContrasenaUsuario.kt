@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -28,7 +30,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,6 +49,8 @@ import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdatePass
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavController, viewModel: UsuariosViewModel) {
+    val isLoading by viewModel.isLoading.collectAsState()
+
 
 
     // Estado para los campos de contraseña
@@ -210,7 +216,14 @@ fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavControlle
                 },
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Cambiar Contraseña")
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Cambiar Contraseña")
+                }
             }
 
             // Mensaje de que falta llenar algo

@@ -7,6 +7,7 @@ import com.corsinf.crud_usuarios.data.DatabaseHelper
 import com.corsinf.crud_usuarios.data.Usuario
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.sql.ResultSet
 import java.security.MessageDigest
+import java.sql.SQLException
 
 class UsuariosViewModel(private val context: Context) : ViewModel() {
     private val _usuarios = MutableStateFlow<List<Usuario>>(emptyList())
@@ -21,6 +23,10 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
+
+    // Error de conexion, de momento utilizado solamente para manejar la carga de usuarios
+    private val _errorConexion = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _errorConexion
 
     // Eventos a enviar a travez para que sean recividos por la UIs que usen collect
     //Eventos agregar usuario
@@ -60,14 +66,16 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
 
     // El viewmodel cargara usuarios al iniciar para tenerlos disponibles desde el inicio
     init {
-        cargarUsuarios()
+        cargarUsuariosConReintento()
     }
 
-    fun cargarUsuarios() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.value = true
+    suspend fun cargarUsuarios() {
+        return withContext(Dispatchers.IO) {
             val dbHelper = DatabaseHelper(context)
             val connection = dbHelper.getConnection()
+            if (connection == null) {
+                throw SQLException("Falló la conexión a la BD")
+            }
             val usuariosList = mutableListOf<Usuario>()
             println("CARGANDO USUARIOS")
             val query = """
@@ -88,16 +96,53 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                         )
                     )
                 }
-
+                resultSet?.close()
                 _usuarios.value = usuariosList
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
                 statement?.close()
                 dbHelper.closeConnection()
-                _isLoading.value = false
             }
         }
+    }
+
+    fun cargarUsuariosConReintento(maxReintentos: Int = 3, delay: Long = 2000) {
+        viewModelScope.launch {
+            var reintentos = 0
+            var exitoso = false
+
+            while (reintentos < maxReintentos && !exitoso) {
+                try {
+                    _isLoading.value = true
+                    _errorConexion.value = null
+
+                    val resultado = withContext(Dispatchers.IO) {
+                        cargarUsuarios()
+                    }
+
+                    exitoso = true
+                } catch (e: Exception) {
+                    reintentos++
+                    _errorConexion.value = "Error al cargar usuarios (intento $reintentos/$maxReintentos)"
+                    println(_errorConexion.value)
+                    if (reintentos < maxReintentos) {
+                        delay(delay) // Espera antes del próximo intento
+                    }
+                } finally {
+                    _isLoading.value = false
+                }
+            }
+
+            if (!exitoso) {
+                _errorConexion.value = "No se pudo cargar los usuarios después de $maxReintentos intentos"
+                println(_errorConexion.value)
+            }
+        }
+    }
+
+    fun reintentarCarga() {
+        cargarUsuariosConReintento()
     }
 
     fun agregarUsuario(usuario: Usuario) {
