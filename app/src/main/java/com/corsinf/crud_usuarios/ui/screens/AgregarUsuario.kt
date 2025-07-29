@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -39,10 +41,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.corsinf.crud_usuarios.data.AppRegex
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventAdd
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.getValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewModel) {
+fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewModel = viewModel()) {
+    val isLoading by viewModel.isLoading.collectAsState()
+
     val nombres = remember { mutableStateOf("") }
     val apellidos = remember { mutableStateOf("") }
     val email = remember { mutableStateOf("") }
@@ -67,7 +74,7 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
         derivedStateOf {
             contrasena.value.isNotEmpty() &&
                     confirmarContrasena.value.isNotEmpty() &&
-                    contrasena.value == confirmarContrasena.value
+                    contrasena.value.trim() == confirmarContrasena.value.trim()
         }
     }
 
@@ -253,9 +260,17 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                         )
                     }
                 },
-                modifier = Modifier.align(Alignment.End)
+                modifier = Modifier.align(Alignment.End),
+                enabled = !isLoading // Esto deshabilita el botón cuando isLoading es true
             ) {
-                Text("Añadir Usuario")
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Añadir Usuario")
+                }
             }
 
             // Mensaje de que falta llenar algo

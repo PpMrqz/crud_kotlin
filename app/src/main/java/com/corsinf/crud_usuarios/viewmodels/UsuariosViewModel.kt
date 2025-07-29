@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.sql.ResultSet
 import java.security.MessageDigest
 
@@ -101,6 +102,15 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
 
     fun agregarUsuario(usuario: Usuario) {
         viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
+
+            val existe = verificarEmailExistSuspend(usuario.email)
+            if (existe) {
+                _uiEventAdd.send(UIEventAdd.Error("El email ingresado ya existe"))
+                _isLoading.value = false
+                return@launch
+            }
+
             val dbHelper = DatabaseHelper(context)
             val connection = dbHelper.getConnection()
             val query = """
@@ -135,12 +145,14 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             } finally {
                 preparedStatement?.close()
                 dbHelper.closeConnection()
+                _isLoading.value = false
             }
         }
     }
 
     fun eliminarUsuario(usuario: Usuario) {
         viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
             val dbHelper = DatabaseHelper(context)
             val connection = dbHelper.getConnection()
             val query = """
@@ -169,12 +181,14 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             } finally {
                 preparedStatement?.close()
                 dbHelper.closeConnection()
+                _isLoading.value = false
             }
         }
     }
 
     fun editarUsuario(usuario: Usuario) {
         viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
             val dbHelper = DatabaseHelper(context)
             val connection = dbHelper.getConnection()
 
@@ -210,12 +224,14 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             } finally {
                 preparedStatement?.close()
                 dbHelper.closeConnection()
+                _isLoading.value = false
             }
         }
     }
 
     fun cambiarContrasenaUsuario(usuario: Usuario) {
         viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
             val dbHelper = DatabaseHelper(context)
             val connection = dbHelper.getConnection()
             val query = """
@@ -248,12 +264,42 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             } finally {
                 preparedStatement?.close()
                 dbHelper.closeConnection()
+                _isLoading.value = false
             }
         }
     }
 
     fun getUsuarioById(id: Int): Usuario? {
         return usuarios.value.firstOrNull { it.id == id }
+    }
+
+    suspend fun verificarEmailExistSuspend(email: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            val dbHelper = DatabaseHelper(context)
+            val connection = dbHelper.getConnection()
+            var existe = false
+
+            val query = """
+                SELECT COUNT(*) as count 
+                FROM [dbo].[USUARIOS] 
+                WHERE [email] = ?
+                """
+            val preparedStatement = connection?.prepareStatement(query)
+
+            try {
+                preparedStatement?.setString(1, email)
+
+                val resultSet = preparedStatement?.executeQuery()
+                if (resultSet?.next() == true) {
+                    existe = resultSet.getInt("count") > 0
+                }
+            } finally {
+                connection?.close()
+                dbHelper.closeConnection()
+            }
+
+            return@withContext existe
+        }
     }
 
 }
