@@ -26,7 +26,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
 
     // Error de conexion, de momento utilizado solamente para manejar la carga de usuarios
     private val _errorConexion = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _errorConexion
+    val errorConexion: StateFlow<String?> = _errorConexion
 
     // Eventos a enviar a travez para que sean recividos por la UIs que usen collect
     //Eventos agregar usuario
@@ -69,7 +69,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         cargarUsuariosConReintento()
     }
 
-    suspend fun cargarUsuarios() {
+    private suspend fun cargarUsuarios() {
         return withContext(Dispatchers.IO) {
             val dbHelper = DatabaseHelper(context)
             val connection = dbHelper.getConnection()
@@ -107,12 +107,13 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         }
     }
 
+
     fun cargarUsuariosConReintento(maxReintentos: Int = 3, delay: Long = 2000) {
         viewModelScope.launch {
             var reintentos = 0
-            var exitoso = false
+            var exito = false
 
-            while (reintentos < maxReintentos && !exitoso) {
+            while (reintentos < maxReintentos && !exito) {
                 try {
                     _isLoading.value = true
                     _errorConexion.value = null
@@ -121,7 +122,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                         cargarUsuarios()
                     }
 
-                    exitoso = true
+                    exito = true
                 } catch (e: Exception) {
                     reintentos++
                     _errorConexion.value = "Error al cargar usuarios (intento $reintentos/$maxReintentos)"
@@ -129,14 +130,12 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                     if (reintentos < maxReintentos) {
                         delay(delay) // Espera antes del próximo intento
                     }
-                } finally {
-                    _isLoading.value = false
                 }
             }
+            _isLoading.value = false
 
-            if (!exitoso) {
-                _errorConexion.value = "No se pudo cargar los usuarios después de $maxReintentos intentos"
-                println(_errorConexion.value)
+            if (!exito) {
+                _errorConexion.value = "No se pudo cargar los usuarios, revise su conexión a internet e intente de vuelta."
             }
         }
     }
@@ -179,7 +178,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
-                    cargarUsuarios() // Recargar la lista
+                    cargarUsuariosConReintento() // Recargar la lista
                     _uiEventAdd.send(UIEventAdd.UserAddedSuccess)
                 } else {
                     _uiEventAdd.send(UIEventAdd.Error("No se pudo insertar el usuario"))
@@ -215,7 +214,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
-                    cargarUsuarios() // Recargar la lista
+                    cargarUsuariosConReintento() // Recargar la lista
                     _uiEventDelete.send(UIEventDelete.UserDeletedSuccess)
                 } else {
                     _uiEventDelete.send(UIEventDelete.Error("No se pudo eliminar el usuario"))
@@ -258,7 +257,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
-                    cargarUsuarios() // Recargar la lista
+                    cargarUsuariosConReintento() // Recargar la lista
                     _uiEventUpdate.send(UIEventUpdate.UserUpdatedSuccess)
                 } else {
                     _uiEventUpdate.send(UIEventUpdate.Error("No se pudo actualizar información de usuario"))
@@ -298,7 +297,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
-                    cargarUsuarios() // Recargar la lista
+                    cargarUsuariosConReintento() // Recargar la lista
                     _uiEventUpdatePass.send(UIEventUpdatePass.UserUpdatedPassSuccess)
                 } else {
                     _uiEventUpdatePass.send(UIEventUpdatePass.Error("No se pudo actualizar información de usuario"))
