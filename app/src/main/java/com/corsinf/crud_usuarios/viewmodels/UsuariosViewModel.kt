@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.sql.ResultSet
 import java.security.MessageDigest
 import java.sql.SQLException
 
@@ -27,6 +26,13 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
     // Error de conexion, de momento utilizado solamente para manejar la carga de usuarios
     private val _errorConexion = MutableStateFlow<String?>(null)
     val errorConexion: StateFlow<String?> = _errorConexion
+
+    // Variables para guardar la ultima busqueda
+    var _pagina = 1
+    var _usuariosPorPagina = 20
+    var _textoBusqueda = ""
+    var _campoBusqueda = "nombre"
+
 
     // Eventos a enviar a travez para que sean recividos por la UIs que usen collect
     //Eventos agregar usuario
@@ -107,6 +113,10 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         }
     }
 
+    fun repetirCargaUsuarios() {
+        cargarUsuariosConReintento()
+    }
+
 
     fun cargarUsuariosConReintento(maxReintentos: Int = 3, delay: Long = 2000) {
         viewModelScope.launch {
@@ -140,8 +150,114 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    fun reintentarCarga() {
-        cargarUsuariosConReintento()
+    private suspend fun buscarUsuarios(
+        pagina: Int,
+        usuariosPorPagina: Int = 20,
+        textoBusqueda: String = "",
+        campoBusqueda: String = "nombres" // Valores posibles: nombres, apellidos, email, ci_ruc
+    ) {
+        return withContext(Dispatchers.IO) {
+            val dbHelper = DatabaseHelper(context)
+            val connection = dbHelper.getConnection()
+            if (connection == null) {
+                throw SQLException("Falló la conexión a la BD")
+            }
+
+            val usuariosList = mutableListOf<Usuario>()
+            val offset = (pagina - 1) * usuariosPorPagina
+
+            val queryBase = """
+            SELECT [nombres], [apellidos], [id_usuarios], [email], [ci_ruc]
+            FROM [dbo].[USUARIOS]
+            """
+
+            val whereClause = if (textoBusqueda.isNotBlank()) {
+                "WHERE [$campoBusqueda] LIKE ?"
+            } else ""
+
+            val query = """
+            $queryBase
+            $whereClause
+            ORDER BY [id_usuarios]
+            OFFSET $offset ROWS
+            FETCH NEXT $usuariosPorPagina ROWS ONLY
+            """
+
+            val statement = connection.prepareStatement(query)
+
+            try {
+                if (textoBusqueda.isNotBlank()) {
+                    statement.setString(1, "%${textoBusqueda}%") // LIKE %texto% para búsqueda parcial
+                }
+
+                val resultSet = statement.executeQuery()
+                while (resultSet.next()) {
+                    usuariosList.add(
+                        Usuario(
+                            id = resultSet.getInt("id_usuarios"),
+                            nombres = resultSet.getString("nombres"),
+                            apellidos = resultSet.getString("apellidos"),
+                            email = resultSet.getString("email"),
+                            ruc = resultSet.getString("ci_ruc")
+                        )
+                    )
+                }
+                resultSet.close()
+                _usuarios.value = usuariosList
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                statement.close()
+                dbHelper.closeConnection()
+            }
+        }
+    }
+
+    fun buscarUsuariosConReintento(
+        pagina: Int,
+        usuariosPorPagina: Int = 20,
+        textoBusqueda: String = "",
+        campoBusqueda: String = "nombres",
+        maxReintentos: Int = 3,
+        delay: Long = 2000
+    ) {
+        viewModelScope.launch {
+            var reintentos = 0
+            var exito = false
+            _pagina = pagina
+            _usuariosPorPagina = usuariosPorPagina
+            _textoBusqueda = textoBusqueda
+            _campoBusqueda = campoBusqueda
+
+            while (reintentos < maxReintentos && !exito) {
+                try {
+                    _isLoading.value = true
+                    _errorConexion.value = null
+
+                    val resultado = withContext(Dispatchers.IO) {
+                        buscarUsuarios(pagina, usuariosPorPagina, textoBusqueda, campoBusqueda)
+                    }
+
+                    exito = true
+                } catch (e: Exception) {
+                    reintentos++
+                    _errorConexion.value = "Error al buscar usuarios (intento $reintentos/$maxReintentos)"
+                    println(_errorConexion.value)
+                    if (reintentos < maxReintentos) {
+                        delay(delay) // Espera antes del próximo intento
+                    }
+                }
+            }
+            _isLoading.value = false
+
+            if (!exito) {
+                _errorConexion.value = "No se pudo buscar los usuarios, revise su conexión a internet e intente de vuelta."
+            }
+        }
+    }
+
+    fun repetirBusqueda() {
+        buscarUsuariosConReintento(_pagina, _usuariosPorPagina, _textoBusqueda, _campoBusqueda)
     }
 
     fun agregarUsuario(usuario: Usuario) {

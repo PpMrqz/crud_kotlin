@@ -22,7 +22,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -32,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel
-import com.corsinf.crud_usuarios.ui.navigation.usuariosGraph
 import com.corsinf.crud_usuarios.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,7 +79,7 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.reintentarCarga() }) {
+                        Button(onClick = { viewModel.repetirCargaUsuarios() }) {
                             Text("Reintentar")
                         }
                     }
