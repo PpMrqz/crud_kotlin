@@ -1,6 +1,7 @@
 package com.corsinf.crud_usuarios.viewmodels
 
 import android.content.Context
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.corsinf.crud_usuarios.data.DatabaseHelper
@@ -17,7 +18,7 @@ import java.security.MessageDigest
 import java.sql.SQLException
 
 class UsuariosViewModel(private val context: Context) : ViewModel() {
-    private val _usuarios = MutableStateFlow<List<Usuario>>(emptyList())
+    private val _usuarios = MutableStateFlow<MutableList<Usuario>>(mutableListOf())
     val usuarios: StateFlow<List<Usuario>> = _usuarios
 
     private val _isLoading = MutableStateFlow(false)
@@ -26,6 +27,9 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
     // Error de conexion, de momento utilizado solamente para manejar la carga de usuarios
     private val _errorConexion = MutableStateFlow<String?>(null)
     val errorConexion: StateFlow<String?> = _errorConexion
+
+    private val _isLastPage = MutableStateFlow(false)
+    val isLastPage: StateFlow<Boolean> = _isLastPage
 
     // Variables para guardar la ultima busqueda
     var _pagina = 1
@@ -72,7 +76,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
 
     // El viewmodel cargara usuarios al iniciar para tenerlos disponibles desde el inicio
     init {
-        cargarUsuariosConReintento()
+        buscarUsuariosConReintento(1)
     }
 
     private suspend fun cargarUsuarios() {
@@ -163,7 +167,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 throw SQLException("Falló la conexión a la BD")
             }
 
-            val usuariosList = mutableListOf<Usuario>()
+            val usuariosList = _usuarios.value
             val offset = (pagina - 1) * usuariosPorPagina
 
             val queryBase = """
@@ -204,6 +208,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 }
                 resultSet.close()
                 _usuarios.value = usuariosList
+                _isLastPage.value = _usuarios.value.size % 20 != 0
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
@@ -294,7 +299,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
-                    cargarUsuariosConReintento() // Recargar la lista
+                    repetirBusqueda() // Recargar la lista
                     _uiEventAdd.send(UIEventAdd.UserAddedSuccess)
                 } else {
                     _uiEventAdd.send(UIEventAdd.Error("No se pudo insertar el usuario"))
@@ -330,7 +335,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
-                    cargarUsuariosConReintento() // Recargar la lista
+                    repetirBusqueda() // Recargar la lista
                     _uiEventDelete.send(UIEventDelete.UserDeletedSuccess)
                 } else {
                     _uiEventDelete.send(UIEventDelete.Error("No se pudo eliminar el usuario"))
@@ -373,7 +378,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
-                    cargarUsuariosConReintento() // Recargar la lista
+                    repetirBusqueda() // Recargar la lista
                     _uiEventUpdate.send(UIEventUpdate.UserUpdatedSuccess)
                 } else {
                     _uiEventUpdate.send(UIEventUpdate.Error("No se pudo actualizar información de usuario"))
@@ -413,7 +418,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
-                    cargarUsuariosConReintento() // Recargar la lista
+                    repetirBusqueda() // Recargar la lista
                     _uiEventUpdatePass.send(UIEventUpdatePass.UserUpdatedPassSuccess)
                 } else {
                     _uiEventUpdatePass.send(UIEventUpdatePass.Error("No se pudo actualizar información de usuario"))
