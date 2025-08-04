@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
@@ -53,12 +54,91 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
     val error by viewModel.errorConexion.collectAsState()
     var currentPage by remember { mutableStateOf(1) }
     val isLastPage by viewModel.isLastPage.collectAsState()
+    var searchText by remember { mutableStateOf("") }
+    var selectedSearchField by remember { mutableStateOf("nombres") }
+    var isSearch by remember { mutableStateOf(false) }
 
-    SearchBar(viewModel)
+    // Estado para el LazyColumn
+    val listState = rememberLazyListState()
+    // Efecto para manejar el scroll cuando se añaden nuevos items
+    LaunchedEffect(usuarios.size) {
+        if (usuarios.size > 20 && currentPage > 1) {
+            // Mantener la posición actual después de cargar más items
+            val currentItem = listState.firstVisibleItemIndex
+            val currentScrollOffset = listState.firstVisibleItemScrollOffset
+            listState.scrollToItem(currentItem, currentScrollOffset)
+        }
+    }
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Lista de Usuarios") })
+            Column {
+                TopAppBar(title = { Text("Lista de Usuarios") })
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Fila de búsqueda
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = searchText,
+                            onValueChange = { searchText = it },
+                            label = { Text("Buscar usuarios") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Button(
+                            onClick = {
+                                isSearch = true
+                                currentPage = 1
+                                viewModel.limpiarBusquedaAnterior()
+                                viewModel.buscarUsuariosConReintento(
+                                    pagina = 1,
+                                    textoBusqueda = searchText,
+                                    campoBusqueda = selectedSearchField
+                                )
+                            }
+                        ) {
+                            Text("Buscar")
+                        }
+                    }
+
+                    // Fila de opciones de campo de búsqueda
+                    Row(
+                        horizontalArrangement = Arrangement.Absolute.Left,
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                    ) {
+                        listOf("Nombre", "RUC/CI", "Email").forEach { field ->
+                            val isSelected = selectedSearchField == field.replace("/", "_").lowercase()
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedSearchField = field.replace("/", "_").lowercase()
+                                },
+                                label = { Text(field.replace("_", "/").capitalize()) },
+                                modifier = Modifier.padding(end = 4.dp)
+                            )
+                        }
+                        if (isSearch) {
+                            Button(
+                                onClick = {
+                                    isSearch = false
+                                    currentPage = 1
+                                    viewModel.limpiarBusquedaAnterior()
+                                    viewModel.buscarUsuariosConReintento(
+                                        pagina = 1
+                                    )
+                                }
+                            ) {
+                                Text("Cancelar")
+                            }
+                        }
+                    }
+                }
+            }
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -109,7 +189,10 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                 }
 
                 else -> {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        state = listState
+                    ) {
                         items(usuarios) { usuario ->
                             ListItem(
                                 headlineContent = { Text("${usuario.nombres} ${usuario.apellidos}") },
@@ -132,8 +215,7 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                             }
                         }
 
-                        // Cargar siguiente página cuando se llega al final
-                        if (!isLoading && !isLastPage) {
+                        if (!isLoading && !isLastPage && usuarios.isNotEmpty()) {
                             item {
                                 LaunchedEffect(Unit) {
                                     currentPage++
@@ -141,70 +223,11 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                                 }
                             }
                         }
+
                     }
                 }
             }
         }
     }
 
-}
-
-@Composable
-fun SearchBar(viewModel: UsuariosViewModel) {
-    var searchText by remember { mutableStateOf("") }
-    var selectedField by remember { mutableStateOf("nombres") }
-
-    Column(modifier = Modifier.padding(16.dp)) {
-        // Fila de búsqueda
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            OutlinedTextField(
-                value = searchText,
-                onValueChange = { searchText = it },
-                label = { Text("Buscar usuarios") },
-                modifier = Modifier.weight(1f),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(
-                onClick = {
-                    viewModel.buscarUsuariosConReintento(
-                        pagina = 1,
-                        textoBusqueda = searchText,
-                        campoBusqueda = selectedField
-                    )
-                }
-            ) {
-                Text("Buscar")
-            }
-        }
-
-        // Fila de opciones de campo de búsqueda
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-        ) {
-            listOf("Nombres", "Apellidos", "RUC/CI", "Email").forEach { field ->
-                val isSelected = selectedField == field.replace("/", "_").lowercase()
-                FilterChip(
-                    selected = isSelected,
-                    onClick = {
-                        selectedField = field.replace("/", "_").lowercase()
-                        // Opcional pa disparar búsqueda automáticamente al cambiar campo
-                        // viewModel.buscarUsuariosConReintento(
-                        // pagina = 1,
-                        // textoBusqueda = searchText,
-                        // campoBusqueda = selectedField
-                        // )
-                    },
-                    label = { Text(field.replace("_", "/").capitalize()) },
-                    modifier = Modifier.padding(end = 4.dp)
-                )
-            }
-        }
-    }
 }

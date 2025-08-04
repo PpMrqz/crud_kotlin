@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.corsinf.crud_usuarios.data.Busqueda
 import com.corsinf.crud_usuarios.data.DatabaseHelper
 import com.corsinf.crud_usuarios.data.Usuario
 import kotlinx.coroutines.Dispatchers
@@ -175,7 +176,11 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             FROM [dbo].[USUARIOS]
             """
 
-            val whereClause = if (textoBusqueda.isNotBlank()) {
+
+
+            val whereClause = if (campoBusqueda == Busqueda.NOMBRES_APELLIDOS){
+                "WHERE [nombres] LIKE ? OR [apellidos] LIKE ?"
+            } else if (textoBusqueda.isNotBlank()) {
                 "WHERE [$campoBusqueda] LIKE ?"
             } else ""
 
@@ -186,13 +191,20 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             OFFSET $offset ROWS
             FETCH NEXT $usuariosPorPagina ROWS ONLY
             """
-
             val statement = connection.prepareStatement(query)
 
             try {
                 if (textoBusqueda.isNotBlank()) {
-                    statement.setString(1, "%${textoBusqueda}%") // LIKE %texto% para búsqueda parcial
+                    if (campoBusqueda == Busqueda.NOMBRES_APELLIDOS) {
+                        statement.setString(1, "%${textoBusqueda}%")  // Para [nombres]
+                        statement.setString(2, "%${textoBusqueda}%")  // Para [apellidos]
+                    }
+                    else {
+                        statement.setString(1, "%${textoBusqueda}%")
+                    }
                 }
+                println(statement)
+                println(textoBusqueda)
 
                 val resultSet = statement.executeQuery()
                 while (resultSet.next()) {
@@ -259,6 +271,9 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 _errorConexion.value = "No se pudo buscar los usuarios, revise su conexión a internet e intente de vuelta."
             }
         }
+    }
+    fun limpiarBusquedaAnterior(){
+        _usuarios.value.clear()
     }
 
     fun repetirBusqueda() {
