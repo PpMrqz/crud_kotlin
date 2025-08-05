@@ -52,10 +52,10 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
     val usuarios by viewModel.usuarios.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.errorConexion.collectAsState()
-    var currentPage by remember { mutableStateOf(1) }
     val isLastPage by viewModel.isLastPage.collectAsState()
-    var searchText by remember { mutableStateOf("") }
-    var selectedSearchField by remember { mutableStateOf("nombres") }
+    var currentPage by viewModel.pagina
+    var searchText by viewModel.textoBusqueda
+    var selectedSearchField by viewModel.campoBusqueda
     var isSearch by remember { mutableStateOf(false) }
 
     // Estado para el LazyColumn
@@ -95,11 +95,7 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                                 isSearch = true
                                 currentPage = 1
                                 viewModel.limpiarBusquedaAnterior()
-                                viewModel.buscarUsuariosConReintento(
-                                    pagina = 1,
-                                    textoBusqueda = searchText,
-                                    campoBusqueda = selectedSearchField
-                                )
+                                viewModel.buscarUsuariosConReintento()
                             }
                         ) {
                             Text("Buscar")
@@ -111,7 +107,7 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                         horizontalArrangement = Arrangement.Absolute.Left,
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                     ) {
-                        listOf("Nombre", "RUC/CI", "Email").forEach { field ->
+                        listOf("Nombre", "CI/RUC", "Email").forEach { field ->
                             val isSelected = selectedSearchField == field.replace("/", "_").lowercase()
                             FilterChip(
                                 selected = isSelected,
@@ -128,9 +124,7 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                                     isSearch = false
                                     currentPage = 1
                                     viewModel.limpiarBusquedaAnterior()
-                                    viewModel.buscarUsuariosConReintento(
-                                        pagina = 1
-                                    )
+                                    viewModel.buscarUsuariosConReintento()
                                 }
                             ) {
                                 Text("Cancelar")
@@ -219,7 +213,12 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                             item {
                                 LaunchedEffect(Unit) {
                                     currentPage++
-                                    viewModel.buscarUsuariosConReintento(currentPage)
+                                    if (isSearch) {
+                                        viewModel.buscarUsuariosConReintento()
+
+                                    } else {
+                                        viewModel.buscarUsuariosConReintento(currentPage)
+                                    }
                                 }
                             }
                         }

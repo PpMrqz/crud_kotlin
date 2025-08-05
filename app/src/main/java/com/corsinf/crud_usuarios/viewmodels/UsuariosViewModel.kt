@@ -33,10 +33,10 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
     val isLastPage: StateFlow<Boolean> = _isLastPage
 
     // Variables para guardar la ultima busqueda
-    var _pagina = 1
-    var _usuariosPorPagina = 20
-    var _textoBusqueda = ""
-    var _campoBusqueda = "nombre"
+    val pagina = mutableStateOf(1)
+    val usuariosPorPagina = mutableStateOf(20)
+    val textoBusqueda = mutableStateOf("")
+    val campoBusqueda = mutableStateOf("nombre")
 
 
     // Eventos a enviar a travez para que sean recividos por la UIs que usen collect
@@ -155,12 +155,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    private suspend fun buscarUsuarios(
-        pagina: Int,
-        usuariosPorPagina: Int = 20,
-        textoBusqueda: String = "",
-        campoBusqueda: String = "nombres" // Valores posibles: nombres, apellidos, email, ci_ruc
-    ) {
+    private suspend fun buscarUsuarios() {
         return withContext(Dispatchers.IO) {
             val dbHelper = DatabaseHelper(context)
             val connection = dbHelper.getConnection()
@@ -169,7 +164,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             }
 
             val usuariosList = _usuarios.value
-            val offset = (pagina - 1) * usuariosPorPagina
+            val offset = (pagina.value - 1) * usuariosPorPagina.value
 
             val queryBase = """
             SELECT [nombres], [apellidos], [id_usuarios], [email], [ci_ruc]
@@ -178,24 +173,26 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
 
 
 
-            val whereClause = if (campoBusqueda == Busqueda.NOMBRES_APELLIDOS){
+            val whereClause = if (textoBusqueda.value.isBlank()) {
+                ""
+            } else if (campoBusqueda.value == Busqueda.NOMBRES_APELLIDOS){
                 "WHERE [nombres] LIKE ? OR [apellidos] LIKE ?"
-            } else if (textoBusqueda.isNotBlank()) {
-                "WHERE [$campoBusqueda] LIKE ?"
-            } else ""
+            } else {
+                "WHERE [${campoBusqueda.value}] LIKE ?"
+            }
 
             val query = """
             $queryBase
             $whereClause
             ORDER BY [id_usuarios]
             OFFSET $offset ROWS
-            FETCH NEXT $usuariosPorPagina ROWS ONLY
+            FETCH NEXT ${usuariosPorPagina.value} ROWS ONLY
             """
             val statement = connection.prepareStatement(query)
 
             try {
-                if (textoBusqueda.isNotBlank()) {
-                    if (campoBusqueda == Busqueda.NOMBRES_APELLIDOS) {
+                if (textoBusqueda.value.isNotBlank()) {
+                    if (campoBusqueda.value == Busqueda.NOMBRES_APELLIDOS) {
                         statement.setString(1, "%${textoBusqueda}%")  // Para [nombres]
                         statement.setString(2, "%${textoBusqueda}%")  // Para [apellidos]
                     }
@@ -231,20 +228,12 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
     }
 
     fun buscarUsuariosConReintento(
-        pagina: Int,
-        usuariosPorPagina: Int = 20,
-        textoBusqueda: String = "",
-        campoBusqueda: String = "nombres",
         maxReintentos: Int = 3,
         delay: Long = 2000
     ) {
         viewModelScope.launch {
             var reintentos = 0
             var exito = false
-            _pagina = pagina
-            _usuariosPorPagina = usuariosPorPagina
-            _textoBusqueda = textoBusqueda
-            _campoBusqueda = campoBusqueda
 
             while (reintentos < maxReintentos && !exito) {
                 try {
@@ -252,7 +241,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                     _errorConexion.value = null
 
                     val resultado = withContext(Dispatchers.IO) {
-                        buscarUsuarios(pagina, usuariosPorPagina, textoBusqueda, campoBusqueda)
+                        buscarUsuarios()
                     }
 
                     exito = true
@@ -277,7 +266,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
     }
 
     fun repetirBusqueda() {
-        buscarUsuariosConReintento(_pagina, _usuariosPorPagina, _textoBusqueda, _campoBusqueda)
+        buscarUsuariosConReintento()
     }
 
     fun agregarUsuario(usuario: Usuario) {

@@ -78,15 +78,16 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
             when (event) {
                 is UIEventUpdate.UserUpdatedSuccess -> {
                     navController.popBackStack()
+                    navController.popBackStack()
                     snackbarHostState.showSnackbar(
                         message = "Usuario editado",
-                        duration = SnackbarDuration.Short
+                        duration = SnackbarDuration.Long
                     )
                 }
                 is UIEventUpdate.Error -> {
                     snackbarHostState.showSnackbar(
                         message = event.message,
-                        duration = SnackbarDuration.Short
+                        duration = SnackbarDuration.Long
                     )
                 }
             }
