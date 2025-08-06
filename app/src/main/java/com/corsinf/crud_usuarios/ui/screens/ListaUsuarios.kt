@@ -27,14 +27,15 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,6 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel
 import com.corsinf.crud_usuarios.ui.navigation.Screen
+import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventListMsg
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,20 +55,45 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.errorConexion.collectAsState()
     val isLastPage by viewModel.isLastPage.collectAsState()
-    var currentPage by viewModel.pagina
-    var searchText by viewModel.textoBusqueda
-    var selectedSearchField by viewModel.campoBusqueda
-    var isSearch by remember { mutableStateOf(false) }
+    var currentPage by viewModel.currentPage
+    var searchText by viewModel.searchText
+    var selectedSearchField by viewModel.selectedSearchField
+    var isSearch by viewModel.isSearch
 
     // Estado para el LazyColumn
     val listState = rememberLazyListState()
-    // Efecto para manejar el scroll cuando se añaden nuevos items
+
+    // Snackbar para mostrar mensajes breves
+    val snackbarHostState = remember { SnackbarHostState() }
+
+
+
     LaunchedEffect(usuarios.size) {
+        // Efecto para manejar el scroll cuando se añaden nuevos items
         if (usuarios.size > 20 && currentPage > 1) {
             // Mantener la posición actual después de cargar más items
             val currentItem = listState.firstVisibleItemIndex
             val currentScrollOffset = listState.firstVisibleItemScrollOffset
             listState.scrollToItem(currentItem, currentScrollOffset)
+        }
+
+        // Manejo de mensajes del backend
+        viewModel.uiEventListMsg.collect { event ->
+            when (event) {
+                is UIEventListMsg.Success -> {
+                    snackbarHostState.showSnackbar(
+                        message = event.message,
+                        duration = SnackbarDuration.Long
+                    )
+                }
+
+                is UIEventListMsg.Error -> {
+                    snackbarHostState.showSnackbar(
+                        message = event.message,
+                        duration = SnackbarDuration.Long
+                    )
+                }
+            }
         }
     }
 
@@ -123,6 +150,8 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                                 onClick = {
                                     isSearch = false
                                     currentPage = 1
+                                    searchText = ""
+                                    selectedSearchField = "nombre"
                                     viewModel.limpiarBusquedaAnterior()
                                     viewModel.buscarUsuariosConReintento()
                                 }
@@ -143,7 +172,8 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "Agregar usuario")
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Box(
             modifier = Modifier

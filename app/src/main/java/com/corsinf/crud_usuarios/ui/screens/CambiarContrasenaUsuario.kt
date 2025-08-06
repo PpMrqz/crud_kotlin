@@ -42,8 +42,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.corsinf.crud_usuarios.data.AppRegex
-import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventAdd
-import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdate
+import com.corsinf.crud_usuarios.data.MsgExito
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdatePass
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,7 +95,7 @@ fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavControlle
                 is UIEventUpdatePass.UserUpdatedPassSuccess -> {
                     navController.popBackStack()
                     snackbarHostState.showSnackbar(
-                        message = "Contrasena de usuario cambiada",
+                        message = MsgExito.USUARIO_CONTRA_CAMBIADA,
                         duration = SnackbarDuration.Short
                     )
                 }

@@ -44,6 +44,7 @@ import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventAdd
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.getValue
+import com.corsinf.crud_usuarios.data.MsgExito
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +104,7 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
                 is UIEventAdd.UserAddedSuccess -> {
                     navController.popBackStack()
                     snackbarHostState.showSnackbar(
-                        message = "Usuario agregado",
+                        message = MsgExito.USUARIO_AGREGADO,
                         duration = SnackbarDuration.Short
                     )
                 }

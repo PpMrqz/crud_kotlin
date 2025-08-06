@@ -17,8 +17,6 @@ import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,11 +36,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.corsinf.crud_usuarios.data.AppRegex
-import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventAdd
+import com.corsinf.crud_usuarios.data.MsgExito
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,7 +76,7 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
                     navController.popBackStack()
                     navController.popBackStack()
                     snackbarHostState.showSnackbar(
-                        message = "Usuario editado",
+                        message = MsgExito.USUARIO_MODIFICADO,
                         duration = SnackbarDuration.Long
                     )
                 }

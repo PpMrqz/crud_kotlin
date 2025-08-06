@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.corsinf.crud_usuarios.data.Busqueda
 import com.corsinf.crud_usuarios.data.DatabaseHelper
+import com.corsinf.crud_usuarios.data.MsgExito
 import com.corsinf.crud_usuarios.data.Usuario
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -33,10 +34,11 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
     val isLastPage: StateFlow<Boolean> = _isLastPage
 
     // Variables para guardar la ultima busqueda
-    val pagina = mutableStateOf(1)
-    val usuariosPorPagina = mutableStateOf(20)
-    val textoBusqueda = mutableStateOf("")
-    val campoBusqueda = mutableStateOf("nombre")
+    val currentPage = mutableStateOf(1)
+    val usuariosPorPagina = mutableStateOf(20) // Este no necesita ser mutableStateOf, de momento
+    val searchText = mutableStateOf("")
+    val selectedSearchField = mutableStateOf("nombre")
+    val isSearch = mutableStateOf(false)
 
 
     // Eventos a enviar a travez para que sean recividos por la UIs que usen collect
@@ -68,12 +70,14 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
         object UserUpdatedPassSuccess : UIEventUpdatePass()
         data class Error(val message: String) : UIEventUpdatePass()
     }
-    // Eventos de navegación por interfaz de usuario
-    /*val channelEventNav = Channel<UIEventNav>()
-    val uiEventNav = channelEventNav.receiveAsFlow()
-    sealed class UIEventNav {
-        data class Error(val message: String) : UIEventNav()
-    }*/
+    // Eventos de para mostrar en lista principal
+    private val _uiEventListMsg = Channel<UIEventListMsg>()
+    val uiEventListMsg = _uiEventListMsg.receiveAsFlow()
+    sealed class UIEventListMsg {
+        data class Success(val message: String) : UIEventListMsg()
+        data class Error(val message: String) : UIEventListMsg()
+    }
+
 
     // El viewmodel cargara usuarios al iniciar para tenerlos disponibles desde el inicio
     init {
@@ -164,7 +168,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             }
 
             val usuariosList = _usuarios.value
-            val offset = (pagina.value - 1) * usuariosPorPagina.value
+            val offset = (currentPage.value - 1) * usuariosPorPagina.value
 
             val queryBase = """
             SELECT [nombres], [apellidos], [id_usuarios], [email], [ci_ruc]
@@ -173,12 +177,12 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
 
 
 
-            val whereClause = if (textoBusqueda.value.isBlank()) {
+            val whereClause = if (searchText.value.isBlank()) {
                 ""
-            } else if (campoBusqueda.value == Busqueda.NOMBRES_APELLIDOS){
+            } else if (selectedSearchField.value == Busqueda.NOMBRES_APELLIDOS){
                 "WHERE [nombres] LIKE ? OR [apellidos] LIKE ?"
             } else {
-                "WHERE [${campoBusqueda.value}] LIKE ?"
+                "WHERE [${selectedSearchField.value}] LIKE ?"
             }
 
             val query = """
@@ -191,17 +195,17 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             val statement = connection.prepareStatement(query)
 
             try {
-                if (textoBusqueda.value.isNotBlank()) {
-                    if (campoBusqueda.value == Busqueda.NOMBRES_APELLIDOS) {
-                        statement.setString(1, "%${textoBusqueda}%")  // Para [nombres]
-                        statement.setString(2, "%${textoBusqueda}%")  // Para [apellidos]
+                if (searchText.value.isNotBlank()) {
+                    if (selectedSearchField.value == Busqueda.NOMBRES_APELLIDOS) {
+                        statement.setString(1, sanearString("%${searchText.value}%"))  // Para [nombres]
+                        statement.setString(2, sanearString("%${searchText.value}%"))  // Para [apellidos]
                     }
                     else {
-                        statement.setString(1, "%${textoBusqueda}%")
+                        statement.setString(1, sanearString("%${searchText.value}%"))
                     }
                 }
                 println(statement)
-                println(textoBusqueda)
+                println(searchText)
 
                 val resultSet = statement.executeQuery()
                 while (resultSet.next()) {
@@ -303,8 +307,11 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
+                    currentPage.value = 1
+                    limpiarBusquedaAnterior()
                     repetirBusqueda() // Recargar la lista
                     _uiEventAdd.send(UIEventAdd.UserAddedSuccess)
+                    _uiEventListMsg.send(UIEventListMsg.Success(MsgExito.USUARIO_AGREGADO))
                 } else {
                     _uiEventAdd.send(UIEventAdd.Error("No se pudo insertar el usuario"))
                 }
@@ -339,8 +346,11 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
+                    currentPage.value = 1
+                    limpiarBusquedaAnterior()
                     repetirBusqueda() // Recargar la lista
                     _uiEventDelete.send(UIEventDelete.UserDeletedSuccess)
+                    _uiEventListMsg.send(UIEventListMsg.Success(MsgExito.USUARIO_ELIMINADO))
                 } else {
                     _uiEventDelete.send(UIEventDelete.Error("No se pudo eliminar el usuario"))
                 }
@@ -373,17 +383,20 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             val preparedStatement = connection?.prepareStatement(query)
 
             try {
-                preparedStatement?.setString(1, usuario.nombres)
-                preparedStatement?.setString(2, usuario.apellidos)
-                preparedStatement?.setString(3, usuario.email)
-                preparedStatement?.setString(4, usuario.ruc)
+                preparedStatement?.setString(1, sanearString(usuario.nombres))
+                preparedStatement?.setString(2, sanearString(usuario.apellidos))
+                preparedStatement?.setString(3, sanearString(usuario.email))
+                preparedStatement?.setString(4, sanearString(usuario.ruc))
                 preparedStatement?.setInt(5, usuario.id)
                 var rowsAffected = 0
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
+                    currentPage.value = 1
+                    limpiarBusquedaAnterior()
                     repetirBusqueda() // Recargar la lista
                     _uiEventUpdate.send(UIEventUpdate.UserUpdatedSuccess)
+                    _uiEventListMsg.send(UIEventListMsg.Success(MsgExito.USUARIO_MODIFICADO))
                 } else {
                     _uiEventUpdate.send(UIEventUpdate.Error("No se pudo actualizar información de usuario"))
                 }
@@ -422,8 +435,11 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                 rowsAffected = preparedStatement?.executeUpdate() ?: 0
 
                 if (rowsAffected > 0) {
+                    currentPage.value = 1
+                    limpiarBusquedaAnterior()
                     repetirBusqueda() // Recargar la lista
                     _uiEventUpdatePass.send(UIEventUpdatePass.UserUpdatedPassSuccess)
+                    _uiEventListMsg.send(UIEventListMsg.Success(MsgExito.USUARIO_CONTRA_CAMBIADA))
                 } else {
                     _uiEventUpdatePass.send(UIEventUpdatePass.Error("No se pudo actualizar información de usuario"))
                 }
@@ -456,7 +472,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             val preparedStatement = connection?.prepareStatement(query)
 
             try {
-                preparedStatement?.setString(1, email)
+                preparedStatement?.setString(1, sanearString(email))
 
                 val resultSet = preparedStatement?.executeQuery()
                 if (resultSet?.next() == true) {

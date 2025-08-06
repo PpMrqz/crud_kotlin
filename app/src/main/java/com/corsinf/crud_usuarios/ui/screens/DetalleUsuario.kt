@@ -33,6 +33,7 @@ import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventDelete
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import com.corsinf.crud_usuarios.data.MsgExito
 import com.corsinf.crud_usuarios.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +50,7 @@ fun DetalleUsuarioScreen(usuario: Usuario, navController: NavController, viewMod
                 is UIEventDelete.UserDeletedSuccess -> {
                     navController.popBackStack()
                     snackbarHostState.showSnackbar(
-                        message = "Usuario eliminado",
+                        message = MsgExito.USUARIO_ELIMINADO,
                         duration = SnackbarDuration.Short
                     )
                 }
