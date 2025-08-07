@@ -19,6 +19,7 @@ import androidx.compose.material3.Surface
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.corsinf.crud_usuarios.ui.navigation.appGraph
 import com.corsinf.crud_usuarios.ui.navigation.usuariosGraph
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel
 
@@ -35,9 +36,9 @@ class MainActivity : ComponentActivity() {
 
                     NavHost(
                         navController = navController,
-                        startDestination = "usuarios"
+                        startDestination = "app"
                     ) {
-                        usuariosGraph(navController, viewModel)
+                        appGraph(navController, viewModel)
                     }
                 }
             }

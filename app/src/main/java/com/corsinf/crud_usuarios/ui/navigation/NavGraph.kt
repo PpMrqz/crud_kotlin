@@ -10,9 +10,11 @@ import com.corsinf.crud_usuarios.ui.screens.DetalleUsuarioScreen
 import com.corsinf.crud_usuarios.ui.screens.ListaUsuariosScreen
 import com.corsinf.crud_usuarios.ui.screens.EditarUsuarioScreen
 import com.corsinf.crud_usuarios.ui.screens.CambiarContrasenaUsuarioScreen
+import com.corsinf.crud_usuarios.ui.screens.LoginScreen
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel
 
 sealed class Screen(val route: String) {
+    object Login : Screen("login")
     object ListaUsuarios : Screen("lista_usuarios")
     object DetalleUsuario : Screen("detalle_usuario") {
         const val USER_ID = "user_id"
@@ -27,6 +29,17 @@ sealed class Screen(val route: String) {
     object CambiarContrasenaUsuario : Screen("cambiar_contrasena_usuario") {
         const val USER_ID = "user_id"
         fun createRoute(userId: Int) = "cambiar_contrasena_usuario/$userId"
+    }
+}
+fun NavGraphBuilder.appGraph(navController: NavController, viewModel: UsuariosViewModel) {
+    navigation(
+        startDestination = Screen.Login.route,
+        route = "app"
+    ) {
+        composable(Screen.Login.route) {
+            LoginScreen(navController)
+        }
+        usuariosGraph(navController, viewModel)
     }
 }
 
