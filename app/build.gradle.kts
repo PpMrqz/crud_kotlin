@@ -93,6 +93,7 @@ dependencies {
     //implementation("com.microsoft.sqlserver:mssql-jdbc:12.4.1.jre11")
     implementation("net.sourceforge.jtds:jtds:1.3.1")
     implementation ("androidx.navigation:navigation-compose:2.7.7")
+    implementation("io.coil-kt:coil-compose:2.4.0")
 
 
     val composeBom = platform("androidx.compose:compose-bom:2025.05.00")

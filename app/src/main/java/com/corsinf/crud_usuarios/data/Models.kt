@@ -7,5 +7,6 @@ data class Usuario(
     val email: String,
     val ruc: String,
     val contrasena: String = "",
+    var foto_url: String = "",
 
 )

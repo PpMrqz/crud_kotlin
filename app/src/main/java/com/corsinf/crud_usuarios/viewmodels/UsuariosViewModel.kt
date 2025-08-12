@@ -94,7 +94,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             val usuariosList = mutableListOf<Usuario>()
             println("CARGANDO USUARIOS")
             val query = """
-                    SELECT [nombres], [apellidos], [id_usuarios], [email], [ci_ruc]
+                    SELECT [nombres], [apellidos], [id_usuarios], [email], [ci_ruc], [foto]
                     FROM [dbo].[USUARIOS]
                     """
             val statement = connection?.createStatement()
@@ -107,7 +107,8 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                             nombres = resultSet.getString("nombres"),
                             apellidos = resultSet.getString("apellidos"),
                             email = resultSet.getString("email"),
-                            ruc = resultSet.getString("ci_ruc")
+                            ruc = resultSet.getString("ci_ruc"),
+                            foto_url = resultSet.getString("foto")
                         )
                     )
                 }
@@ -171,7 +172,7 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
             val offset = (currentPage.value - 1) * usuariosPorPagina.value
 
             val queryBase = """
-            SELECT [nombres], [apellidos], [id_usuarios], [email], [ci_ruc]
+            SELECT [nombres], [apellidos], [id_usuarios], [email], [ci_ruc], [foto]
             FROM [dbo].[USUARIOS]
             """
 
@@ -215,7 +216,8 @@ class UsuariosViewModel(private val context: Context) : ViewModel() {
                             nombres = resultSet.getString("nombres"),
                             apellidos = resultSet.getString("apellidos"),
                             email = resultSet.getString("email"),
-                            ruc = resultSet.getString("ci_ruc")
+                            ruc = resultSet.getString("ci_ruc"),
+                            foto_url = resultSet.getString("foto")
                         )
                     )
                 }
