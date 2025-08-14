@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 
 
@@ -46,14 +47,14 @@ fun LoginScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Banner azul (primer tercio de la pantalla)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 200.dp, max = 300.dp)
-                .background(Color(0xFF169DD9))
+                .background(MaterialTheme.colorScheme.primary)
         ) {
             Column(
                 modifier = Modifier
@@ -62,13 +63,13 @@ fun LoginScreen(navController: NavController) {
             ) {
                 Text(
                     text = "Corsinf",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "Sistema de Gestión de Clientes",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontSize = 16.sp
                 )
             }
@@ -88,7 +89,8 @@ fun LoginScreen(navController: NavController) {
                 text = "Ingresar",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.Start)
+                modifier = Modifier.align(Alignment.Start),
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(32.dp))

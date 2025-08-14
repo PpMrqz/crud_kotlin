@@ -35,3 +35,7 @@ val Coral = Color(0xFFEF7768)
 val AmarilloMaiz = Color(0xFFFDCC68)
 val NaranjaOcre = Color(0xFFDD9E4C)
 val VerdeAbeto = Color(0xFF3A745A)
+
+
+// Tonalidades
+val AzulVivoTono0 = Color(0xFFE6F1FB)

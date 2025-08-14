@@ -29,6 +29,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -153,17 +154,21 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                         horizontalArrangement = Arrangement.Absolute.Left,
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                     ) {
-                        listOf("Nombre", "CI/RUC", "Email").forEach { field ->
-                            val isSelected = selectedSearchField == field.replace("/", "_").lowercase()
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = {
-                                    selectedSearchField = field.replace("/", "_").lowercase()
-                                },
-                                label = { Text(field.replace("_", "/").capitalize()) },
-                                modifier = Modifier.padding(end = 4.dp)
-                            )
-                        }
+                            listOf("Nombre", "CI/RUC", "Email").forEach { field ->
+                                val isSelected = selectedSearchField == field.replace("/", "_").lowercase()
+                                FilterChip(
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                                    ),
+                                    selected = isSelected,
+                                    onClick = {
+                                        selectedSearchField = field.replace("/", "_").lowercase()
+                                    },
+                                    label = { Text(field.replace("_", "/").capitalize()) },
+                                    modifier = Modifier.padding(end = 4.dp)
+                                )
+                            }
                         if (isSearch) {
                             Button(
                                 onClick = {
@@ -247,8 +252,8 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                                     },
                                 shape = RoundedCornerShape(8.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = Blanco,
-                                    contentColor = Negro
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                                 ),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                             ) {

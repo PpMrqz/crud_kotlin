@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            MaterialTheme {
+            Crud_usuariosTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val navController = rememberNavController()
                     val viewModel = UsuariosViewModel(this)
