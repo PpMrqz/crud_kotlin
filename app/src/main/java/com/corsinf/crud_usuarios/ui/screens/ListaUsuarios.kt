@@ -34,7 +34,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -62,6 +62,7 @@ import com.corsinf.crud_usuarios.ui.navigation.Screen
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventListMsg
 import coil.compose.AsyncImage
 import com.corsinf.crud_usuarios.R
+import com.corsinf.crud_usuarios.ui.components.CustomOutlinedTextField
 import com.corsinf.crud_usuarios.ui.theme.AzulVivo
 import com.corsinf.crud_usuarios.ui.theme.Blanco
 import com.corsinf.crud_usuarios.ui.theme.GrisClaro
@@ -127,12 +128,12 @@ fun ListaUsuariosScreen(navController: NavController, viewModel: UsuariosViewMod
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        OutlinedTextField(
+                        CustomOutlinedTextField(
                             value = searchText,
                             onValueChange = { searchText = it },
-                            label = { Text("Buscar usuarios") },
+                            label = "Buscar usuarios",
                             modifier = Modifier.weight(1f),
-                            singleLine = true
+                            singleLine = true,
                         )
 
                         Spacer(modifier = Modifier.width(8.dp))

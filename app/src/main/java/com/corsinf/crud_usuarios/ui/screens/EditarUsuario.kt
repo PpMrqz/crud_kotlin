@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -39,6 +38,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.corsinf.crud_usuarios.data.AppRegex
 import com.corsinf.crud_usuarios.data.MsgExito
+import com.corsinf.crud_usuarios.ui.components.CustomOutlinedTextField
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,29 +112,29 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Campo de nombres
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = nombres.value,
                 onValueChange = { nombres.value = it },
-                label = { Text("Nombres") },
+                label = "Nombres",
                 modifier = Modifier.fillMaxWidth()
             )
             // Campo de apellidos
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = apellidos.value,
                 onValueChange = { apellidos.value = it },
-                label = { Text("Apellidos") },
+                label = "Apellidos",
                 modifier = Modifier.fillMaxWidth()
             )
 
             // Campo de email
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = email.value,
                 onValueChange = {
                     if (it.isEmpty() || it.matches(Regex(AppRegex.EMAIL_CHARS))) {
                         email.value = it
                     }
                 },
-                label = { Text("Email") },
+                label = "Email",
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 isError = email.value.isNotEmpty() && !email.value.matches(
@@ -143,14 +143,14 @@ fun EditarUsuarioScreen(usuario: Usuario, navController: NavController, viewMode
             )
 
             // Campo de CI/RUC
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = ruc.value,
                 onValueChange = {
                     if (it.isEmpty() || it.matches(Regex(AppRegex.NUM_CHARS))) {
                         ruc.value = it
                     }
                 },
-                label = { Text("RUC/CI") },
+                label = "RUC/CI",
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = ruc.value.isNotEmpty() && (

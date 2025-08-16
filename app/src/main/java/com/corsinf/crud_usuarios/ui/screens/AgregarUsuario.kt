@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -45,6 +44,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.getValue
 import com.corsinf.crud_usuarios.data.MsgExito
+import com.corsinf.crud_usuarios.ui.components.CustomOutlinedTextField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -140,29 +140,29 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Campo de nombres
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = nombres.value,
                 onValueChange = { nombres.value = it },
-                label = { Text("Nombres") },
+                label = "Nombres",
                 modifier = Modifier.fillMaxWidth()
             )
             // Campo de apellidos
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = apellidos.value,
                 onValueChange = { apellidos.value = it },
-                label = { Text("Apellidos") },
+                label = "Apellidos",
                 modifier = Modifier.fillMaxWidth()
             )
 
             // Campo de email
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = email.value,
                 onValueChange = {
                     if (it.isEmpty() || it.matches(Regex(AppRegex.EMAIL_CHARS))) {
                         email.value = it
                     }
                 },
-                label = { Text("Email") },
+                label = "Email",
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 isError = email.value.isNotEmpty() && !email.value.matches(
@@ -171,14 +171,14 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
             )
 
             // Campo de CI/RUC
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = ruc.value,
                 onValueChange = {
                     if (it.isEmpty() || it.matches(Regex(AppRegex.NUM_CHARS))) {
                         ruc.value = it
                     }
                 },
-                label = { Text("RUC/CI") },
+                label = "RUC/CI",
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = ruc.value.isNotEmpty() && (
@@ -187,10 +187,10 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
             )
 
             // Campo de contraseña
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = contrasena.value,
                 onValueChange = { contrasena.value = it },
-                label = { Text("Contraseña") },
+                label = "Contraseña",
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (contrasenaVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -215,10 +215,38 @@ fun AgregarUsuarioScreen(navController: NavController, viewModel: UsuariosViewMo
 
 
             // Campo de confirmar contraseña
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = confirmarContrasena.value,
                 onValueChange = { confirmarContrasena.value = it },
-                label = { Text("Confirmar Contraseña") },
+                label = "Confirmar Contraseña",
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = if (confirmPasswordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    IconButton(onClick = { confirmPasswordVisible.value = !confirmPasswordVisible.value }) {
+                        Icon(
+                            imageVector = if (confirmPasswordVisible.value) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (confirmPasswordVisible.value) "Ocultar contraseña" else "Mostrar contraseña"
+                        )
+                    }
+                },
+                isError = confirmarContrasena.value.isNotEmpty() && !doPasswordsMatch.value
+            )
+            // Mensaje de que nomás debe tener la contraseña
+            if (contrasena.value.isNotEmpty() && !isPasswordValid.value) {
+                Text(
+                    text = "La contraseña debe tener:\n- Mínimo 8 caracteres\n- Mayúsculas y minúsculas\n- Números",
+                    color = MaterialTheme.colors.error,
+                    style = MaterialTheme.typography.caption
+                )
+            }
+
+
+            // Campo de confirmar contraseña
+            CustomOutlinedTextField(
+                value = confirmarContrasena.value,
+                onValueChange = { confirmarContrasena.value = it },
+                label = "Confirmar Contraseña",
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (confirmPasswordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),

@@ -28,11 +28,12 @@ private val LightColorScheme = lightColorScheme(
     secondary = GrisOscuro,
     tertiary = AzulPetroleo,
     background = AzulVivoTono0,
-    onBackground = GrisPizarra,
+    onBackground = GrisOscuro,
     surface = AzulVivo,
     onSurface = Blanco,
     primaryContainer = AzulPastel,
     secondaryContainer = Blanco,
+    onSecondaryContainer = GrisOscuro,
 
 
     //primary = Purple40,

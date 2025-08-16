@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -43,6 +42,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.corsinf.crud_usuarios.data.AppRegex
 import com.corsinf.crud_usuarios.data.MsgExito
+import com.corsinf.crud_usuarios.ui.components.CustomOutlinedTextField
 import com.corsinf.crud_usuarios.viewmodels.UsuariosViewModel.UIEventUpdatePass
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -137,10 +137,10 @@ fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavControlle
             Text(text = "RUC/CI: ${usuario.ruc}")
 
             // Campo de contraseña
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = contrasena.value,
                 onValueChange = { contrasena.value = it },
-                label = { Text("Contraseña") },
+                label = "Contraseña",
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (contrasenaVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -165,10 +165,10 @@ fun CambiarContrasenaUsuarioScreen(usuario: Usuario, navController: NavControlle
 
 
             // Campo de confirmar contraseña
-            OutlinedTextField(
+            CustomOutlinedTextField(
                 value = confirmarContrasena.value,
                 onValueChange = { confirmarContrasena.value = it },
-                label = { Text("Confirmar Contraseña") },
+                label = "Confirmar Contraseña",
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (confirmPasswordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
